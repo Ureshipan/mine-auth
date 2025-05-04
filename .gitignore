@@ -1,0 +1,36 @@
+# .gitignore для проекта авторизации
+
+# Зависимости Node.js
+node_modules/
+
+# Файлы окружения и секреты
+.env
+.env.local
+.env.*.local
+
+# Логи
+*.log
+logs/
+
+# Настройки IDE
+.vscode/
+.idea/
+
+# Временные и системные файлы
+.DS_Store
+*.tmp
+*.swp
+
+# Автогенерируемые файлы
+dist/
+build/
+
+# Резервные копии MySQL
+*.sql~
+*.bak
+
+# Файлы конфигурации сервисов (если используются)
+config/local.json
+
+# Исключение персональных данных БД (если есть в репе)
+/database_credentials.json

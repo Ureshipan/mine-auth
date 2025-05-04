@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<body>
+  <h2>Регистрация</h2>
+  <form onsubmit="register(event)">
+    <input type="text" id="login" placeholder="Логин" required><br>
+    <input type="password" id="password" placeholder="Пароль" required><br>
+    <button type="submit">Зарегистрироваться</button>
+  </form>
+  <script>
+    async function register(e) {
+      e.preventDefault();
+      const login = document.getElementById('login').value;
+      const password = document.getElementById('password').value;
+      
+      const response = await fetch('/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ Login: login, Password: password })
+      });
+      
+      const result = await response.json();
+      alert(result.Message);
+    }
+  </script>
+</body>
+</html>
