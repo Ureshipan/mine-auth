@@ -4,13 +4,14 @@
     "description": "Сервис авторизации для Minecraft-лаунчера",
     "main": "src/server.js",
     "scripts": {
-      "start": "node src/server.js"
+        "start": "node src/server.js"
     },
     "dependencies": {
-      "express": "^4.18.2",
-      "mysql": "^2.18.1",
-      "bcrypt": "^5.1.1",
-      "body-parser": "^1.20.2",
-      "dotenv": "^16.3.1"
+        "bcrypt": "^5.1.1",
+        "body-parser": "^1.20.3",
+        "dotenv": "^16.3.1",
+        "express": "^4.21.2",
+        "fs": "^0.0.1-security",
+        "sqlite3": "^5.1.7"
     }
-  }
+}
