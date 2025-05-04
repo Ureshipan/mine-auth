@@ -2,6 +2,7 @@ const express = require('express');
 const mysql = require('mysql');
 const bodyParser = require('body-parser');
 const bcrypt = require('bcrypt'); 
+const fs = require('fs');
 require('dotenv').config(); // Добавляем в начало файла
 
 const connection = mysql.createConnection({
