@@ -44,12 +44,14 @@ app.post('/register', async (req, res) => {
       function(err) {
         if (err) {
           return res.status(500).json({ Message: 'Ошибка регистрации' });
+          console.log(error);
         }
         res.json({ Message: 'Успешная регистрация' });
       }
     );
   } catch (error) {
     res.status(500).json({ Message: 'Ошибка сервера' });
+    console.log(error);
   }
 });
 
@@ -84,7 +86,7 @@ app.get('/register', (req, res) => {
   res.sendFile(path.join(__dirname, 'public/register.html'));
 });
 
-const PORT = 3000;
+const PORT = 5013;
 app.listen(PORT, () => {
   console.log(`Сервер запущен на порту ${PORT}`);
 });
