@@ -115,7 +115,7 @@ app.get('/register', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'register.html'));
 });
 
-const PORT = 3000;
+const PORT = 5013;
 app.listen(PORT, () => {
   console.log(`Сервер запущен на порту ${PORT}`);
 });
