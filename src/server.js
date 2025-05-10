@@ -50,13 +50,20 @@ app.use(session({
     dir: './'
   }),
   secret: 'minecraft-auth-secret',
-  resave: false,
-  saveUninitialized: false,
+  resave: true,
+  saveUninitialized: true,
   cookie: {
     secure: false, // set to true if using https
     maxAge: 1000 * 60 * 60 * 24 // 24 hours
   }
 }));
+
+// Middleware для логирования запросов
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+  console.log('Session:', req.session);
+  next();
+});
 
 // Настройка загрузки файлов
 const storage = multer.diskStorage({
@@ -143,22 +150,28 @@ app.get('/login', (req, res) => {
 
 // Middleware для проверки авторизации на сайте
 const requireAuth = (req, res, next) => {
+  console.log('Checking auth, session:', req.session);
   if (req.session && req.session.userId) {
+    console.log('User is authenticated:', req.session.userId);
     next();
   } else {
+    console.log('User is not authenticated');
     res.status(401).json({ Message: 'Требуется авторизация' });
   }
 };
 
 // Получение профиля пользователя
 app.get('/api/profile', requireAuth, (req, res) => {
+  console.log('Getting profile for user:', req.session.userId);
   db.get(
     'SELECT uuid, login, nickname, skin_path, cape_path FROM users WHERE uuid = ?',
     [req.session.userId],
     (err, row) => {
       if (err || !row) {
+        console.log('Profile not found or error:', err);
         return res.status(404).json({ Message: 'Пользователь не найден' });
       }
+      console.log('Profile found:', row);
       res.json(row);
     }
   );
@@ -223,22 +236,33 @@ app.post('/api/upload/cape', requireAuth, upload.single('cape'), (req, res) => {
 // Авторизация на сайте
 app.post('/login', async (req, res) => {
   const { Login, Password } = req.body;
+  console.log('Login attempt for:', Login);
   
   db.get(
     'SELECT uuid, password FROM users WHERE login = ?',
     [Login],
     async (err, row) => {
       if (err || !row) {
+        console.log('Login failed: User not found or error:', err);
         return res.status(401).json({ Message: 'Неверные данные' });
       }
       
       const match = await bcrypt.compare(Password, row.password);
       if (match) {
+        console.log('Login successful for user:', row.uuid);
         req.session.userId = row.uuid;
-        res.json({
-          Message: 'Успешная авторизация'
+        req.session.save((err) => {
+          if (err) {
+            console.error('Error saving session:', err);
+            return res.status(500).json({ Message: 'Ошибка сервера' });
+          }
+          console.log('Session saved successfully');
+          res.json({
+            Message: 'Успешная авторизация'
+          });
         });
       } else {
+        console.log('Login failed: Invalid password');
         res.status(401).json({ Message: 'Неверные данные' });
       }
     }
