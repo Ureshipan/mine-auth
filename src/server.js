@@ -423,8 +423,10 @@ app.get('/api/v1/integrations/news/list', (req, res) => {
       console.error('Error fetching news:', err);
       return res.status(500).json({ Message: 'Ошибка получения новостей' });
     }
-    let news_list = [];
-    for (let row in rows) {
+    var news_list = [];
+    var index;
+    for (index = 0; index <= rows.length - 1; --index) {
+      var row = rows[index];
       console.log(row.title);
       news_list.push({
         id: row.id,
