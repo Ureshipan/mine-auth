@@ -262,51 +262,49 @@
         async function loadNews() {
             try {
                 const response = await fetch('/api/v1/integrations/news/list');
-                const data = await response.json();
+                const newsList = await response.json();
                 
-                if (data.Success) {
-                    const newsSection = document.getElementById('newsSection');
-                    newsSection.innerHTML = '';
+                const newsSection = document.getElementById('newsSection');
+                newsSection.innerHTML = '';
+                
+                newsList.forEach(news => {
+                    const newsCard = document.createElement('div');
+                    newsCard.className = 'news-card';
                     
-                    data.Data.forEach(news => {
-                        const newsCard = document.createElement('div');
-                        newsCard.className = 'news-card';
-                        
-                        const date = new Date(news.published_at);
-                        const formattedDate = date.toLocaleString('ru-RU', {
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                        });
-                        
-                        newsCard.innerHTML = `
-                            ${news.image ? `
-                                <div class="news-image">
-                                    <img src="${news.image}" alt="${news.title}" class="img-fluid">
-                                </div>
-                            ` : ''}
-                            <h3 class="news-title">${news.title}</h3>
-                            <div class="news-description">${news.description}</div>
-                            <div class="news-content">${news.content}</div>
-                            <div class="news-meta">
-                                <div class="news-author">
-                                    <span class="author-name" style="color: ${news.author.role.color}">${news.author.name}</span>
-                                    <span class="author-role">${news.author.role.name}</span>
-                                </div>
-                                <div class="news-date">${formattedDate}</div>
-                            </div>
-                            ${isAdmin ? `
-                                <div class="news-actions">
-                                    <button class="btn btn-danger" onclick="deleteNews(${news.id})">Удалить</button>
-                                </div>
-                            ` : ''}
-                        `;
-                        
-                        newsSection.appendChild(newsCard);
+                    const date = new Date(news.published_at);
+                    const formattedDate = date.toLocaleString('ru-RU', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
                     });
-                }
+                    
+                    newsCard.innerHTML = `
+                        ${news.image ? `
+                            <div class="news-image">
+                                <img src="${news.image}" alt="${news.title}" class="img-fluid">
+                            </div>
+                        ` : ''}
+                        <h3 class="news-title">${news.title}</h3>
+                        <div class="news-description">${news.description}</div>
+                        <div class="news-content">${news.content}</div>
+                        <div class="news-meta">
+                            <div class="news-author">
+                                <span class="author-name" style="color: ${news.author.role.color}">${news.author.name}</span>
+                                <span class="author-role">${news.author.role.name}</span>
+                            </div>
+                            <div class="news-date">${formattedDate}</div>
+                        </div>
+                        ${isAdmin ? `
+                            <div class="news-actions">
+                                <button class="btn btn-danger" onclick="deleteNews(${news.id})">Удалить</button>
+                            </div>
+                        ` : ''}
+                    `;
+                    
+                    newsSection.appendChild(newsCard);
+                });
             } catch (error) {
                 console.error('Error loading news:', error);
             }
