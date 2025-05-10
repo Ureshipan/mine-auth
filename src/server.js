@@ -24,7 +24,6 @@ const db = new sqlite3.Database(dbPath, (err) => {
       uuid TEXT PRIMARY KEY,
       login TEXT UNIQUE NOT NULL,
       password TEXT NOT NULL,
-      nickname TEXT,
       skin_path TEXT,
       cape_path TEXT
     );
@@ -164,7 +163,7 @@ const requireAuth = (req, res, next) => {
 app.get('/api/profile', requireAuth, (req, res) => {
   console.log('Getting profile for user:', req.session.userId);
   db.get(
-    'SELECT uuid, login, nickname, skin_path, cape_path FROM users WHERE uuid = ?',
+    'SELECT uuid, login, skin_path, cape_path FROM users WHERE uuid = ?',
     [req.session.userId],
     (err, row) => {
       if (err || !row) {
@@ -179,16 +178,34 @@ app.get('/api/profile', requireAuth, (req, res) => {
 
 // Обновление профиля пользователя
 app.post('/api/profile', requireAuth, (req, res) => {
-  const { nickname } = req.body;
+  const { login } = req.body;
   
-  db.run(
-    'UPDATE users SET nickname = ? WHERE uuid = ?',
-    [nickname, req.session.userId],
-    function(err) {
+  // Проверяем, не занят ли логин другим пользователем
+  db.get(
+    'SELECT uuid FROM users WHERE login = ? AND uuid != ?',
+    [login, req.session.userId],
+    (err, row) => {
       if (err) {
-        return res.status(500).json({ Message: 'Ошибка обновления профиля' });
+        console.error('Error checking login:', err);
+        return res.status(500).json({ Message: 'Ошибка сервера' });
       }
-      res.json({ Message: 'Профиль обновлен' });
+      
+      if (row) {
+        return res.status(400).json({ Message: 'Этот логин уже занят' });
+      }
+
+      // Обновляем логин
+      db.run(
+        'UPDATE users SET login = ? WHERE uuid = ?',
+        [login, req.session.userId],
+        function(err) {
+          if (err) {
+            console.error('Error updating login:', err);
+            return res.status(500).json({ Message: 'Ошибка обновления профиля' });
+          }
+          res.json({ Message: 'Профиль обновлен' });
+        }
+      );
     }
   );
 });

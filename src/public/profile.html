@@ -168,8 +168,8 @@
                             <h5 class="card-title">Настройки профиля</h5>
                             <form id="profileForm">
                                 <div class="mb-3">
-                                    <label for="nickname" class="form-label">Никнейм</label>
-                                    <input type="text" class="form-control" id="nickname">
+                                    <label for="login" class="form-label">Логин</label>
+                                    <input type="text" class="form-control" id="login">
                                 </div>
                                 <button type="submit" class="btn btn-primary">Сохранить</button>
                             </form>
@@ -198,7 +198,7 @@
                 const data = await response.json();
                 console.log('Profile data received:', data);
                 
-                document.getElementById('nickname').value = data.nickname || '';
+                document.getElementById('login').value = data.login || '';
                 if (data.skin_path) {
                     document.getElementById('skinPreview').style.backgroundImage = `url(${data.skin_path})`;
                 }
@@ -264,14 +264,14 @@
         // Обновление профиля
         document.getElementById('profileForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const nickname = document.getElementById('nickname').value;
+            const login = document.getElementById('login').value;
             try {
                 const response = await fetch('/api/profile', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ nickname })
+                    body: JSON.stringify({ login })
                 });
                 const data = await response.json();
                 if (response.ok) {
