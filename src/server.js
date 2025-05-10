@@ -411,7 +411,7 @@ app.get('/api/v1/integrations/news/list', (req, res) => {
       n.slug,
       n.url,
       n.content,
-      n.published_at,
+      strftime('%Y-%m-%dT%H:%M:%S+00:00', n.published_at) as published_at,
       n.image,
       u.login as author_name,
       u.uuid as author_id
