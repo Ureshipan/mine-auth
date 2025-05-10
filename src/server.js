@@ -93,6 +93,34 @@ const upload = multer({
   }
 });
 
+// Список администраторов
+const ADMIN_USERS = ['admin', 'moderator']; // Добавьте сюда логины администраторов
+
+// Middleware для проверки прав администратора
+const requireAdmin = async (req, res, next) => {
+  if (!req.session || !req.session.userId) {
+    return res.status(401).json({ Message: 'Требуется авторизация' });
+  }
+
+  try {
+    const user = await new Promise((resolve, reject) => {
+      db.get('SELECT login FROM users WHERE uuid = ?', [req.session.userId], (err, row) => {
+        if (err) reject(err);
+        else resolve(row);
+      });
+    });
+
+    if (!user || !ADMIN_USERS.includes(user.login)) {
+      return res.status(403).json({ Message: 'Недостаточно прав' });
+    }
+
+    next();
+  } catch (error) {
+    console.error('Error checking admin rights:', error);
+    res.status(500).json({ Message: 'Ошибка сервера' });
+  }
+};
+
 // Регистрация
 app.post('/register', async (req, res) => {
   const { Login, Password } = req.body;
@@ -390,8 +418,30 @@ app.get('/api/v1/integrations/news/list', (req, res) => {
   );
 });
 
-// Добавление новости (только для авторизованных пользователей)
-app.post('/api/news', requireAuth, (req, res) => {
+// Главная страница
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public/index.html'));
+});
+
+// Проверка авторизации
+app.get('/api/auth/check', (req, res) => {
+  if (req.session && req.session.userId) {
+    db.get('SELECT login FROM users WHERE uuid = ?', [req.session.userId], (err, row) => {
+      if (err || !row) {
+        return res.json({ Success: false });
+      }
+      res.json({ 
+        Success: true,
+        IsAdmin: ADMIN_USERS.includes(row.login)
+      });
+    });
+  } else {
+    res.json({ Success: false });
+  }
+});
+
+// Добавление новости (только для администраторов)
+app.post('/api/news', requireAdmin, (req, res) => {
   const { title, content } = req.body;
   
   if (!title || !content) {
@@ -411,8 +461,8 @@ app.post('/api/news', requireAuth, (req, res) => {
   );
 });
 
-// Удаление новости (только для авторизованных пользователей)
-app.delete('/api/news/:id', requireAuth, (req, res) => {
+// Удаление новости (только для администраторов)
+app.delete('/api/news/:id', requireAdmin, (req, res) => {
   const newsId = req.params.id;
   
   db.run(
