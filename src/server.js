@@ -423,9 +423,7 @@ app.get('/api/v1/integrations/news/list', (req, res) => {
       console.error('Error fetching news:', err);
       return res.status(500).json({ Message: 'Ошибка получения новостей' });
     }
-    res.json({
-      Success: true,
-      Data: rows.map(row => ({
+    res.json([{
         id: row.id,
         title: row.title,
         description: row.description,
@@ -444,8 +442,8 @@ app.get('/api/v1/integrations/news/list', (req, res) => {
         },
         published_at: row.published_at,
         image: row.image
-      }))
-    });
+      }
+    ]);
   });
 });
 
