@@ -210,6 +210,54 @@ app.post('/api/profile', requireAuth, (req, res) => {
   );
 });
 
+// Получение скина по нику
+app.get('/api/download/skin/:username', (req, res) => {
+  const username = req.params.username;
+  console.log('Getting skin for user:', username);
+
+  db.get(
+    'SELECT skin_path FROM users WHERE login = ?',
+    [username],
+    (err, row) => {
+      if (err || !row || !row.skin_path) {
+        console.log('Skin not found or error:', err);
+        return res.status(404).send('Скин не найден');
+      }
+
+      const skinPath = path.join(__dirname, 'public', row.skin_path);
+      if (fs.existsSync(skinPath)) {
+        res.sendFile(skinPath);
+      } else {
+        res.status(404).send('Файл скина не найден');
+      }
+    }
+  );
+});
+
+// Получение плаща по нику
+app.get('/api/download/cape/:username', (req, res) => {
+  const username = req.params.username;
+  console.log('Getting cape for user:', username);
+
+  db.get(
+    'SELECT cape_path FROM users WHERE login = ?',
+    [username],
+    (err, row) => {
+      if (err || !row || !row.cape_path) {
+        console.log('Cape not found or error:', err);
+        return res.status(404).send('Плащ не найден');
+      }
+
+      const capePath = path.join(__dirname, 'public', row.cape_path);
+      if (fs.existsSync(capePath)) {
+        res.sendFile(capePath);
+      } else {
+        res.status(404).send('Файл плаща не найден');
+      }
+    }
+  );
+});
+
 // Загрузка скина
 app.post('/api/upload/skin', requireAuth, upload.single('skin'), (req, res) => {
   if (!req.file) {
@@ -223,9 +271,14 @@ app.post('/api/upload/skin', requireAuth, upload.single('skin'), (req, res) => {
     [skinPath, req.session.userId],
     function(err) {
       if (err) {
+        console.error('Error uploading skin:', err);
         return res.status(500).json({ Message: 'Ошибка загрузки скина' });
       }
-      res.json({ Message: 'Скин успешно загружен', path: skinPath });
+      res.json({ 
+        Message: 'Скин успешно загружен', 
+        path: skinPath,
+        downloadUrl: `/api/download/skin/${req.session.userId}`
+      });
     }
   );
 });
@@ -243,9 +296,14 @@ app.post('/api/upload/cape', requireAuth, upload.single('cape'), (req, res) => {
     [capePath, req.session.userId],
     function(err) {
       if (err) {
+        console.error('Error uploading cape:', err);
         return res.status(500).json({ Message: 'Ошибка загрузки плаща' });
       }
-      res.json({ Message: 'Плащ успешно загружен', path: capePath });
+      res.json({ 
+        Message: 'Плащ успешно загружен', 
+        path: capePath,
+        downloadUrl: `/api/download/cape/${req.session.userId}`
+      });
     }
   );
 });

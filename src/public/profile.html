@@ -200,10 +200,12 @@
                 
                 document.getElementById('login').value = data.login || '';
                 if (data.skin_path) {
-                    document.getElementById('skinPreview').style.backgroundImage = `url(${data.skin_path})`;
+                    const skinUrl = `/api/download/skin/${data.login}`;
+                    document.getElementById('skinPreview').style.backgroundImage = `url(${skinUrl})`;
                 }
                 if (data.cape_path) {
-                    document.getElementById('capePreview').style.backgroundImage = `url(${data.cape_path})`;
+                    const capeUrl = `/api/download/cape/${data.login}`;
+                    document.getElementById('capePreview').style.backgroundImage = `url(${capeUrl})`;
                 }
             } catch (error) {
                 console.error('Auth check error:', error);
@@ -226,7 +228,8 @@
                 });
                 const data = await response.json();
                 if (response.ok) {
-                    document.getElementById('skinPreview').style.backgroundImage = `url(${data.path})`;
+                    const skinUrl = `/api/download/skin/${document.getElementById('login').value}`;
+                    document.getElementById('skinPreview').style.backgroundImage = `url(${skinUrl})`;
                     alert('Скин успешно загружен');
                 } else {
                     alert(data.Message);
@@ -251,7 +254,8 @@
                 });
                 const data = await response.json();
                 if (response.ok) {
-                    document.getElementById('capePreview').style.backgroundImage = `url(${data.path})`;
+                    const capeUrl = `/api/download/cape/${document.getElementById('login').value}`;
+                    document.getElementById('capePreview').style.backgroundImage = `url(${capeUrl})`;
                     alert('Плащ успешно загружен');
                 } else {
                     alert(data.Message);
