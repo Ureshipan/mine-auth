@@ -1,17 +1,18 @@
 {
-    "name": "mine-auth",
+    "name": "minecraft-auth",
     "version": "1.0.0",
-    "description": "Сервис авторизации для Minecraft-лаунчера",
+    "description": "Minecraft authentication service",
     "main": "src/server.js",
     "scripts": {
         "start": "node src/server.js"
     },
     "dependencies": {
+        "express": "^4.18.2",
+        "sqlite3": "^5.1.6",
+        "body-parser": "^1.20.2",
         "bcrypt": "^5.1.1",
-        "body-parser": "^1.20.3",
-        "dotenv": "^16.3.1",
-        "express": "^4.21.2",
-        "fs": "^0.0.1-security",
-        "sqlite3": "^5.1.7"
+        "multer": "^1.4.5-lts.1",
+        "express-session": "^1.17.3",
+        "connect-sqlite3": "^0.9.13"
     }
 }

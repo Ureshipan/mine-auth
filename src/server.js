@@ -5,6 +5,9 @@ const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 const path = require('path');
 const fs = require('fs');
+const multer = require('multer');
+const session = require('express-session');
+const SQLiteStore = require('connect-sqlite3')(session);
 
 // Создание/подключение БД
 const dbPath = './auth.db';
@@ -20,7 +23,16 @@ const db = new sqlite3.Database(dbPath, (err) => {
     CREATE TABLE IF NOT EXISTS users (
       uuid TEXT PRIMARY KEY,
       login TEXT UNIQUE NOT NULL,
-      password TEXT NOT NULL
+      password TEXT NOT NULL,
+      nickname TEXT,
+      skin_path TEXT,
+      cape_path TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS sessions (
+      sid TEXT PRIMARY KEY,
+      sess TEXT NOT NULL,
+      expired DATETIME NOT NULL
     );
   `, (err) => {
     if (err) console.error('Ошибка создания таблиц:', err);
@@ -30,6 +42,43 @@ const db = new sqlite3.Database(dbPath, (err) => {
 const app = express();
 app.use(bodyParser.json());
 app.use(express.static('public'));
+
+// Настройка сессий
+app.use(session({
+  store: new SQLiteStore({
+    db: 'sessions.db',
+    dir: './'
+  }),
+  secret: 'minecraft-auth-secret',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: false, // set to true if using https
+    maxAge: 1000 * 60 * 60 * 24 // 24 hours
+  }
+}));
+
+// Настройка загрузки файлов
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    const uploadDir = path.join(__dirname, 'public/uploads');
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    cb(null, uploadDir);
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({ 
+  storage: storage,
+  limits: {
+    fileSize: 1024 * 1024 * 2 // 2MB limit
+  }
+});
 
 // Регистрация
 app.post('/register', async (req, res) => {
@@ -85,6 +134,130 @@ app.post('/auth', (req, res) => {
 // HTML форма регистрации
 app.get('/register', (req, res) => {
   res.sendFile(path.join(__dirname, 'public/register.html'));
+});
+
+// HTML форма входа
+app.get('/login', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public/login.html'));
+});
+
+// Middleware для проверки авторизации на сайте
+const requireAuth = (req, res, next) => {
+  if (req.session && req.session.userId) {
+    next();
+  } else {
+    res.status(401).json({ Message: 'Требуется авторизация' });
+  }
+};
+
+// Получение профиля пользователя
+app.get('/api/profile', requireAuth, (req, res) => {
+  db.get(
+    'SELECT uuid, login, nickname, skin_path, cape_path FROM users WHERE uuid = ?',
+    [req.session.userId],
+    (err, row) => {
+      if (err || !row) {
+        return res.status(404).json({ Message: 'Пользователь не найден' });
+      }
+      res.json(row);
+    }
+  );
+});
+
+// Обновление профиля пользователя
+app.post('/api/profile', requireAuth, (req, res) => {
+  const { nickname } = req.body;
+  
+  db.run(
+    'UPDATE users SET nickname = ? WHERE uuid = ?',
+    [nickname, req.session.userId],
+    function(err) {
+      if (err) {
+        return res.status(500).json({ Message: 'Ошибка обновления профиля' });
+      }
+      res.json({ Message: 'Профиль обновлен' });
+    }
+  );
+});
+
+// Загрузка скина
+app.post('/api/upload/skin', requireAuth, upload.single('skin'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ Message: 'Файл не загружен' });
+  }
+
+  const skinPath = '/uploads/' + req.file.filename;
+  
+  db.run(
+    'UPDATE users SET skin_path = ? WHERE uuid = ?',
+    [skinPath, req.session.userId],
+    function(err) {
+      if (err) {
+        return res.status(500).json({ Message: 'Ошибка загрузки скина' });
+      }
+      res.json({ Message: 'Скин успешно загружен', path: skinPath });
+    }
+  );
+});
+
+// Загрузка плаща
+app.post('/api/upload/cape', requireAuth, upload.single('cape'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ Message: 'Файл не загружен' });
+  }
+
+  const capePath = '/uploads/' + req.file.filename;
+  
+  db.run(
+    'UPDATE users SET cape_path = ? WHERE uuid = ?',
+    [capePath, req.session.userId],
+    function(err) {
+      if (err) {
+        return res.status(500).json({ Message: 'Ошибка загрузки плаща' });
+      }
+      res.json({ Message: 'Плащ успешно загружен', path: capePath });
+    }
+  );
+});
+
+// Авторизация на сайте
+app.post('/login', async (req, res) => {
+  const { Login, Password } = req.body;
+  
+  db.get(
+    'SELECT uuid, password FROM users WHERE login = ?',
+    [Login],
+    async (err, row) => {
+      if (err || !row) {
+        return res.status(401).json({ Message: 'Неверные данные' });
+      }
+      
+      const match = await bcrypt.compare(Password, row.password);
+      if (match) {
+        req.session.userId = row.uuid;
+        res.json({
+          Message: 'Успешная авторизация'
+        });
+      } else {
+        res.status(401).json({ Message: 'Неверные данные' });
+      }
+    }
+  );
+});
+
+// Выход из аккаунта
+app.post('/logout', (req, res) => {
+  req.session.destroy((err) => {
+    if (err) {
+      return res.status(500).json({ Message: 'Ошибка выхода' });
+    }
+    res.json({ Message: 'Успешный выход' });
+  });
+});
+
+// Страница личного кабинета
+app.get('/profile', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public/profile.html'));
 });
 
 const PORT = 5013;

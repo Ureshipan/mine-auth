@@ -7,6 +7,8 @@ sudo apt install -y nodejs npm
 # Установка модулей проекта
 npm install
 
+mkdir -p src/public/uploads
+
 # Создание systemd-сервиса
 sudo tee /etc/systemd/system/auth-service.service > /dev/null <<EOF
 [Unit]
