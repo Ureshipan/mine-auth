@@ -37,8 +37,14 @@ const db = new sqlite3.Database(dbPath, (err) => {
     CREATE TABLE IF NOT EXISTS news (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       title TEXT NOT NULL,
+      description TEXT NOT NULL,
+      slug TEXT UNIQUE NOT NULL,
+      url TEXT,
       content TEXT NOT NULL,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      author_id INTEGER,
+      published_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      image TEXT,
+      FOREIGN KEY (author_id) REFERENCES users(uuid)
     );
   `, (err) => {
     if (err) console.error('Ошибка создания таблиц:', err);
@@ -397,25 +403,50 @@ app.get('/profile', (req, res) => {
 // API для новостей
 // Получение списка новостей
 app.get('/api/v1/integrations/news/list', (req, res) => {
-  db.all(
-    'SELECT id, title, content, created_at FROM news ORDER BY created_at DESC',
-    [],
-    (err, rows) => {
-      if (err) {
-        console.error('Error fetching news:', err);
-        return res.status(500).json({ Message: 'Ошибка получения новостей' });
-      }
-      res.json({
-        Success: true,
-        Data: rows.map(row => ({
-          Title: row.title,
-          Content: row.content,
-          Date: row.created_at,
-          Type: 'News' // По умолчанию тип новости
-        }))
-      });
+  db.all(`
+    SELECT 
+      n.id,
+      n.title,
+      n.description,
+      n.slug,
+      n.url,
+      n.content,
+      n.published_at,
+      n.image,
+      u.login as author_name,
+      u.uuid as author_id
+    FROM news n
+    LEFT JOIN users u ON n.author_id = u.uuid
+    ORDER BY n.published_at DESC
+  `, [], (err, rows) => {
+    if (err) {
+      console.error('Error fetching news:', err);
+      return res.status(500).json({ Message: 'Ошибка получения новостей' });
     }
-  );
+    res.json({
+      Success: true,
+      Data: rows.map(row => ({
+        id: row.id,
+        title: row.title,
+        description: row.description,
+        slug: row.slug,
+        url: row.url || `https://your-domain.com/news/${row.slug}`,
+        content: row.content,
+        author: {
+          id: row.author_id,
+          name: row.author_name,
+          role: {
+            id: 2,
+            name: "Админ",
+            color: "#e10d11"
+          },
+          registered: row.published_at
+        },
+        published_at: row.published_at,
+        image: row.image
+      }))
+    });
+  });
 });
 
 // Главная страница
@@ -442,15 +473,23 @@ app.get('/api/auth/check', (req, res) => {
 
 // Добавление новости (только для администраторов)
 app.post('/api/news', requireAdmin, (req, res) => {
-  const { title, content } = req.body;
+  const { title, description, content, image } = req.body;
   
-  if (!title || !content) {
-    return res.status(400).json({ Message: 'Заголовок и содержание обязательны' });
+  if (!title || !description || !content) {
+    return res.status(400).json({ Message: 'Заголовок, описание и содержание обязательны' });
   }
 
+  // Создаем slug из заголовка
+  const slug = title
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+  
   db.run(
-    'INSERT INTO news (title, content) VALUES (?, ?)',
-    [title, content],
+    `INSERT INTO news (
+      title, description, slug, content, author_id, image
+    ) VALUES (?, ?, ?, ?, ?, ?)`,
+    [title, description, slug, content, req.session.userId, image],
     function(err) {
       if (err) {
         console.error('Error adding news:', err);

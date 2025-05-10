@@ -152,6 +152,47 @@
             min-height: 150px;
             resize: vertical;
         }
+
+        .news-image {
+            margin-bottom: 1rem;
+        }
+        
+        .news-image img {
+            width: 100%;
+            height: auto;
+            border-radius: 4px;
+        }
+        
+        .news-description {
+            color: var(--light-text);
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            font-style: italic;
+        }
+        
+        .news-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--dark-primary);
+        }
+        
+        .news-author {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .author-name {
+            font-weight: bold;
+        }
+        
+        .author-role {
+            color: var(--primary-color);
+            font-size: 0.9rem;
+        }
     </style>
 </head>
 <body>
@@ -175,8 +216,16 @@
                     <input type="text" id="title" class="form-control" required>
                 </div>
                 <div class="form-group">
+                    <label for="description">Краткое описание</label>
+                    <input type="text" id="description" class="form-control" required>
+                </div>
+                <div class="form-group">
                     <label for="content">Содержание</label>
                     <textarea id="content" class="form-control" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="image">URL изображения</label>
+                    <input type="url" id="image" class="form-control">
                 </div>
                 <button type="submit" class="btn btn-primary">Опубликовать</button>
             </form>
@@ -223,7 +272,7 @@
                         const newsCard = document.createElement('div');
                         newsCard.className = 'news-card';
                         
-                        const date = new Date(news.Date);
+                        const date = new Date(news.published_at);
                         const formattedDate = date.toLocaleString('ru-RU', {
                             year: 'numeric',
                             month: 'long',
@@ -233,9 +282,21 @@
                         });
                         
                         newsCard.innerHTML = `
-                            <h3 class="news-title">${news.Title}</h3>
-                            <div class="news-content">${news.Content}</div>
-                            <div class="news-date">${formattedDate}</div>
+                            ${news.image ? `
+                                <div class="news-image">
+                                    <img src="${news.image}" alt="${news.title}" class="img-fluid">
+                                </div>
+                            ` : ''}
+                            <h3 class="news-title">${news.title}</h3>
+                            <div class="news-description">${news.description}</div>
+                            <div class="news-content">${news.content}</div>
+                            <div class="news-meta">
+                                <div class="news-author">
+                                    <span class="author-name" style="color: ${news.author.role.color}">${news.author.name}</span>
+                                    <span class="author-role">${news.author.role.name}</span>
+                                </div>
+                                <div class="news-date">${formattedDate}</div>
+                            </div>
                             ${isAdmin ? `
                                 <div class="news-actions">
                                     <button class="btn btn-danger" onclick="deleteNews(${news.id})">Удалить</button>
@@ -261,7 +322,9 @@
             }
             
             const title = document.getElementById('title').value;
+            const description = document.getElementById('description').value;
             const content = document.getElementById('content').value;
+            const image = document.getElementById('image').value;
             
             try {
                 const response = await fetch('/api/news', {
@@ -270,7 +333,7 @@
                         'Content-Type': 'application/json'
                     },
                     credentials: 'include',
-                    body: JSON.stringify({ title, content })
+                    body: JSON.stringify({ title, description, content, image })
                 });
                 
                 const data = await response.json();
