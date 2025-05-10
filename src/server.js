@@ -33,6 +33,13 @@ const db = new sqlite3.Database(dbPath, (err) => {
       sess TEXT NOT NULL,
       expired DATETIME NOT NULL
     );
+
+    CREATE TABLE IF NOT EXISTS news (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      title TEXT NOT NULL,
+      content TEXT NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
   `, (err) => {
     if (err) console.error('Ошибка создания таблиц:', err);
   });
@@ -357,6 +364,68 @@ app.post('/logout', (req, res) => {
 // Страница личного кабинета
 app.get('/profile', (req, res) => {
   res.sendFile(path.join(__dirname, 'public/profile.html'));
+});
+
+// API для новостей
+// Получение списка новостей
+app.get('/api/v1/integrations/news/list', (req, res) => {
+  db.all(
+    'SELECT id, title, content, created_at FROM news ORDER BY created_at DESC',
+    [],
+    (err, rows) => {
+      if (err) {
+        console.error('Error fetching news:', err);
+        return res.status(500).json({ Message: 'Ошибка получения новостей' });
+      }
+      res.json({
+        Success: true,
+        Data: rows.map(row => ({
+          Title: row.title,
+          Content: row.content,
+          Date: row.created_at,
+          Type: 'News' // По умолчанию тип новости
+        }))
+      });
+    }
+  );
+});
+
+// Добавление новости (только для авторизованных пользователей)
+app.post('/api/news', requireAuth, (req, res) => {
+  const { title, content } = req.body;
+  
+  if (!title || !content) {
+    return res.status(400).json({ Message: 'Заголовок и содержание обязательны' });
+  }
+
+  db.run(
+    'INSERT INTO news (title, content) VALUES (?, ?)',
+    [title, content],
+    function(err) {
+      if (err) {
+        console.error('Error adding news:', err);
+        return res.status(500).json({ Message: 'Ошибка добавления новости' });
+      }
+      res.json({ Message: 'Новость успешно добавлена' });
+    }
+  );
+});
+
+// Удаление новости (только для авторизованных пользователей)
+app.delete('/api/news/:id', requireAuth, (req, res) => {
+  const newsId = req.params.id;
+  
+  db.run(
+    'DELETE FROM news WHERE id = ?',
+    [newsId],
+    function(err) {
+      if (err) {
+        console.error('Error deleting news:', err);
+        return res.status(500).json({ Message: 'Ошибка удаления новости' });
+      }
+      res.json({ Message: 'Новость успешно удалена' });
+    }
+  );
 });
 
 const PORT = 5013;
