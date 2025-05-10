@@ -425,7 +425,7 @@ app.get('/api/v1/integrations/news/list', (req, res) => {
     }
     var news_list = [];
     var index;
-    for (index = 0; index <= rows.length - 1; --index) {
+    for (index = 0; index <= rows.length - 1; ++index) {
       var row = rows[index];
       console.log(row.title);
       news_list.push({
