@@ -425,6 +425,7 @@ app.get('/api/v1/integrations/news/list', (req, res) => {
     }
     let news_list = [];
     for (let row in rows) {
+      console.log(row.title);
       news_list.push({
         id: row.id,
         title: row.title,
