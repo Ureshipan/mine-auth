@@ -436,7 +436,7 @@ app.get('/api/v1/integrations/news/list', (req, res) => {
         url: row.url || `https://your-domain.com/news/${row.slug}`,
         content: row.content,
         author: {
-          id: row.author_id,
+          id: 1, // Using a fixed numeric ID for compatibility
           name: row.author_name,
           role: {
             id: 2,
