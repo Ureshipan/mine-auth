@@ -38,7 +38,7 @@ const db = new sqlite3.Database(dbPath, (err) => {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       title TEXT NOT NULL,
       description TEXT NOT NULL,
-      slug TEXT UNIQUE NOT NULL,
+      slug TEXT NOT NULL,
       url TEXT,
       content TEXT NOT NULL,
       author_id INTEGER,
