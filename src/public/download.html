@@ -266,7 +266,7 @@
 
         <div id="downloadSection" style="display: none;">
             <div class="row">
-                <div class="col-md-8">
+                <div class="col-md-12">
                     <div class="download-card">
                         <div class="version-badge">
                             Версия <span id="latestVersion">1.0.1</span>
@@ -293,17 +293,8 @@
                         <a href="#" id="downloadBtn" class="download-btn">
                             <i class="fas fa-download"></i> Скачать для Windows
                         </a>
-                    </div>
-                </div>
-                
-                <div class="col-md-4">
-                    <div class="download-card">
-                        <h4><i class="fas fa-history"></i> Предыдущие версии</h4>
-                        <select id="versionSelector" class="version-selector">
-                            <option value="1.0.1">v1.0.1 (Последняя)</option>
-                            <option value="1.0.0">v1.0.0</option>
-                        </select>
-                        <button id="showChangelogBtn" class="btn btn-outline-primary w-100">
+                        
+                        <button id="showChangelogBtn" class="btn btn-outline-primary mt-3">
                             <i class="fas fa-file-alt"></i> Показать changelog
                         </button>
                     </div>
@@ -331,7 +322,6 @@
                 const response = await fetch('/api/launcher/versions');
                 versionsData = await response.json();
                 displayLatestVersion();
-                populateVersionSelector();
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('downloadSection').style.display = 'block';
             } catch (error) {
@@ -360,25 +350,6 @@
                 const platformName = platformNames[latest.platform] || latest.platform;
                 document.getElementById('downloadBtn').innerHTML = `<i class="fas fa-download"></i> Скачать для ${platformName}`;
             }
-        }
-
-        // Заполнение селектора версий
-        function populateVersionSelector() {
-            const selector = document.getElementById('versionSelector');
-            selector.innerHTML = '';
-            
-            versionsData.versions.forEach(version => {
-                const option = document.createElement('option');
-                option.value = version.version;
-                const platformNames = {
-                    'windows': 'Windows',
-                    'macos': 'macOS',
-                    'linux': 'Linux'
-                };
-                const platformName = platformNames[version.platform] || version.platform;
-                option.textContent = `v${version.version} (${platformName})`;
-                selector.appendChild(option);
-            });
         }
 
         // Форматирование размера файла
@@ -412,26 +383,6 @@
         // Обработчики событий
         document.getElementById('showChangelogBtn').addEventListener('click', () => {
             loadChangelog();
-        });
-
-        document.getElementById('versionSelector').addEventListener('change', (e) => {
-            const selectedVersion = versionsData.versions.find(v => v.version === e.target.value);
-            if (selectedVersion) {
-                currentVersion = selectedVersion;
-                document.getElementById('fileSize').textContent = formatFileSize(selectedVersion.size);
-                document.getElementById('releaseDate').textContent = formatDate(selectedVersion.releaseDate);
-                document.getElementById('fileMd5').textContent = selectedVersion.md5;
-                document.getElementById('downloadBtn').href = selectedVersion.downloadUrl;
-                
-                // Обновляем текст кнопки
-                const platformNames = {
-                    'windows': 'Windows',
-                    'macos': 'macOS',
-                    'linux': 'Linux'
-                };
-                const platformName = platformNames[selectedVersion.platform] || selectedVersion.platform;
-                document.getElementById('downloadBtn').innerHTML = `<i class="fas fa-download"></i> Скачать для ${platformName}`;
-            }
         });
 
         // Загрузка данных при загрузке страницы
