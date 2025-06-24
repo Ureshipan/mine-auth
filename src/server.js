@@ -100,7 +100,20 @@ const db = new sqlite3.Database(dbPath, (err) => {
 
 const app = express();
 app.use(bodyParser.json());
-app.use(express.static('public'));
+
+// Middleware для правильных MIME типов
+app.use((req, res, next) => {
+  if (req.url.endsWith('.css')) {
+    res.setHeader('Content-Type', 'text/css');
+    logger.debug('Serving CSS file:', req.url);
+  } else if (req.url.endsWith('.js')) {
+    res.setHeader('Content-Type', 'application/javascript');
+    logger.debug('Serving JS file:', req.url);
+  }
+  next();
+});
+
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Настройка сессий
 app.use(session({
@@ -514,12 +527,40 @@ app.get('/api/v1/integrations/news/list', (req, res) => {
 // API для общих компонентов
 app.get('/api/components/header', (req, res) => {
   logger.debug('Serving header component');
-  res.sendFile(path.join(__dirname, 'public/components/header.html'));
+  const headerPath = path.join(__dirname, 'public/components/header.html');
+  
+  // Проверяем существование файла
+  if (!fs.existsSync(headerPath)) {
+    logger.error('Header component file not found:', headerPath);
+    return res.status(404).json({ error: 'Header component not found' });
+  }
+  
+  try {
+    res.sendFile(headerPath);
+    logger.debug('Header component served successfully');
+  } catch (error) {
+    logger.error('Error serving header component:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 app.get('/api/components/footer', (req, res) => {
   logger.debug('Serving footer component');
-  res.sendFile(path.join(__dirname, 'public/components/footer.html'));
+  const footerPath = path.join(__dirname, 'public/components/footer.html');
+  
+  // Проверяем существование файла
+  if (!fs.existsSync(footerPath)) {
+    logger.error('Footer component file not found:', footerPath);
+    return res.status(404).json({ error: 'Footer component not found' });
+  }
+  
+  try {
+    res.sendFile(footerPath);
+    logger.debug('Footer component served successfully');
+  } catch (error) {
+    logger.error('Error serving footer component:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 // API для лаунчера

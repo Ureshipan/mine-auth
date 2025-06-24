@@ -13,7 +13,40 @@
     <main class="container mt-4">
         <h1>Тестовая страница</h1>
         <p>Эта страница используется для тестирования загрузки компонентов.</p>
-        <div id="status">Загрузка компонентов...</div>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Статус загрузки</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="status">Загрузка компонентов...</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Диагностика</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="diagnostics">
+                            <p><strong>CSS:</strong> <span id="cssStatus">Проверка...</span></p>
+                            <p><strong>JS:</strong> <span id="jsStatus">Проверка...</span></p>
+                            <p><strong>Header API:</strong> <span id="headerApiStatus">Проверка...</span></p>
+                            <p><strong>Footer API:</strong> <span id="footerApiStatus">Проверка...</span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="mt-3">
+            <button class="btn btn-primary" onclick="runDiagnostics()">Запустить диагностику</button>
+            <button class="btn btn-secondary" onclick="location.reload()">Обновить страницу</button>
+        </div>
     </main>
     
     <div id="footer"></div>
@@ -35,6 +68,65 @@
                 status.innerHTML = '<div class="alert alert-success">Все компоненты загружены успешно!</div>';
             }
         }, 2000);
+        
+        // Функция диагностики
+        async function runDiagnostics() {
+            const cssStatus = document.getElementById('cssStatus');
+            const jsStatus = document.getElementById('jsStatus');
+            const headerApiStatus = document.getElementById('headerApiStatus');
+            const footerApiStatus = document.getElementById('footerApiStatus');
+            
+            // Проверка CSS
+            try {
+                const cssResponse = await fetch('/css/common.css');
+                if (cssResponse.ok) {
+                    cssStatus.innerHTML = '<span class="text-success">✓ Загружен</span>';
+                } else {
+                    cssStatus.innerHTML = `<span class="text-danger">✗ Ошибка ${cssResponse.status}</span>`;
+                }
+            } catch (error) {
+                cssStatus.innerHTML = `<span class="text-danger">✗ Ошибка: ${error.message}</span>`;
+            }
+            
+            // Проверка JS
+            try {
+                const jsResponse = await fetch('/js/components.js');
+                if (jsResponse.ok) {
+                    jsStatus.innerHTML = '<span class="text-success">✓ Загружен</span>';
+                } else {
+                    jsStatus.innerHTML = `<span class="text-danger">✗ Ошибка ${jsResponse.status}</span>`;
+                }
+            } catch (error) {
+                jsStatus.innerHTML = `<span class="text-danger">✗ Ошибка: ${error.message}</span>`;
+            }
+            
+            // Проверка Header API
+            try {
+                const headerResponse = await fetch('/api/components/header');
+                if (headerResponse.ok) {
+                    headerApiStatus.innerHTML = '<span class="text-success">✓ Работает</span>';
+                } else {
+                    headerApiStatus.innerHTML = `<span class="text-danger">✗ Ошибка ${headerResponse.status}</span>`;
+                }
+            } catch (error) {
+                headerApiStatus.innerHTML = `<span class="text-danger">✗ Ошибка: ${error.message}</span>`;
+            }
+            
+            // Проверка Footer API
+            try {
+                const footerResponse = await fetch('/api/components/footer');
+                if (footerResponse.ok) {
+                    footerApiStatus.innerHTML = '<span class="text-success">✓ Работает</span>';
+                } else {
+                    footerApiStatus.innerHTML = `<span class="text-danger">✗ Ошибка ${footerResponse.status}</span>`;
+                }
+            } catch (error) {
+                footerApiStatus.innerHTML = `<span class="text-danger">✗ Ошибка: ${error.message}</span>`;
+            }
+        }
+        
+        // Запускаем диагностику при загрузке
+        setTimeout(runDiagnostics, 1000);
     </script>
 </body>
 </html> 
