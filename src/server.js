@@ -458,6 +458,11 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public/index.html'));
 });
 
+// Favicon
+app.get('/favicon.ico', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public/favicon.ico'));
+});
+
 // Проверка авторизации
 app.get('/api/auth/check', (req, res) => {
   if (req.session && req.session.userId) {
