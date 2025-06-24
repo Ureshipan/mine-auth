@@ -8,15 +8,62 @@ const fs = require('fs');
 const multer = require('multer');
 const session = require('express-session');
 const SQLiteStore = require('connect-sqlite3')(session);
+const winston = require('winston');
+
+// Настройка логирования
+const logDir = 'logs';
+if (!fs.existsSync(logDir)) {
+    fs.mkdirSync(logDir);
+}
+
+// Создаем логгер
+const logger = winston.createLogger({
+    level: 'info',
+    format: winston.format.combine(
+        winston.format.timestamp({
+            format: 'YYYY-MM-DD HH:mm:ss'
+        }),
+        winston.format.errors({ stack: true }),
+        winston.format.json()
+    ),
+    defaultMeta: { service: 'minecraft-auth' },
+    transports: [
+        // Лог всех сообщений в combined.log
+        new winston.transports.File({
+            filename: path.join(logDir, 'combined.log'),
+            maxsize: 5 * 1024 * 1024, // 5MB
+            maxFiles: 5,
+            tailable: true
+        }),
+        // Лог ошибок в error.log
+        new winston.transports.File({
+            filename: path.join(logDir, 'error.log'),
+            level: 'error',
+            maxsize: 5 * 1024 * 1024, // 5MB
+            maxFiles: 5,
+            tailable: true
+        })
+    ]
+});
+
+// Если не продакшн, то логируем в консоль
+if (process.env.NODE_ENV !== 'production') {
+    logger.add(new winston.transports.Console({
+        format: winston.format.combine(
+            winston.format.colorize(),
+            winston.format.simple()
+        )
+    }));
+}
 
 // Создание/подключение БД
 const dbPath = './auth.db';
 const db = new sqlite3.Database(dbPath, (err) => {
   if (err) {
-    console.error('Ошибка подключения к БД:', err);
+    logger.error('Ошибка подключения к БД:', err);
     process.exit(1);
   }
-  console.log('Подключение к SQLite успешно');
+  logger.info('Подключение к SQLite успешно');
   
   // Инициализация таблиц
   db.exec(`
@@ -47,7 +94,7 @@ const db = new sqlite3.Database(dbPath, (err) => {
       FOREIGN KEY (author_id) REFERENCES users(uuid)
     );
   `, (err) => {
-    if (err) console.error('Ошибка создания таблиц:', err);
+    if (err) logger.error('Ошибка создания таблиц:', err);
   });
 });
 
@@ -72,8 +119,11 @@ app.use(session({
 
 // Middleware для логирования запросов
 app.use((req, res, next) => {
-  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
-  console.log('Session:', req.session);
+  logger.info(`${req.method} ${req.url}`, {
+    ip: req.ip,
+    userAgent: req.get('User-Agent'),
+    sessionId: req.sessionID
+  });
   next();
 });
 
@@ -122,7 +172,7 @@ const requireAdmin = async (req, res, next) => {
 
     next();
   } catch (error) {
-    console.error('Error checking admin rights:', error);
+    logger.error('Error checking admin rights:', error);
     res.status(500).json({ Message: 'Ошибка сервера' });
   }
 };
@@ -140,15 +190,16 @@ app.post('/register', async (req, res) => {
       [uuid, Login, hashedPassword],
       function(err) {
         if (err) {
+          logger.error('Ошибка регистрации:', err);
           return res.status(500).json({ Message: 'Ошибка регистрации' });
-          console.log(error);
         }
+        logger.info('Успешная регистрация пользователя:', { login: Login });
         res.json({ Message: 'Успешная регистрация' });
       }
     );
   } catch (error) {
+    logger.error('Ошибка сервера при регистрации:', error);
     res.status(500).json({ Message: 'Ошибка сервера' });
-    console.log(error);
   }
 });
 
@@ -190,29 +241,35 @@ app.get('/login', (req, res) => {
 
 // Middleware для проверки авторизации на сайте
 const requireAuth = (req, res, next) => {
-  console.log('Checking auth, session:', req.session);
+  logger.debug('Checking auth, session:', req.session);
   if (req.session && req.session.userId) {
-    console.log('User is authenticated:', req.session.userId);
+    logger.debug('User is authenticated:', req.session.userId);
     next();
   } else {
-    console.log('User is not authenticated');
+    logger.debug('User is not authenticated');
     res.status(401).json({ Message: 'Требуется авторизация' });
   }
 };
 
 // Получение профиля пользователя
 app.get('/api/profile', requireAuth, (req, res) => {
-  console.log('Getting profile for user:', req.session.userId);
+  logger.debug('Getting profile for user:', req.session.userId);
+  
   db.get(
-    'SELECT uuid, login, skin_path, cape_path FROM users WHERE uuid = ?',
+    'SELECT login, skin_path, cape_path FROM users WHERE uuid = ?',
     [req.session.userId],
     (err, row) => {
       if (err || !row) {
-        console.log('Profile not found or error:', err);
-        return res.status(404).json({ Message: 'Пользователь не найден' });
+        logger.warn('Profile not found or error:', err);
+        return res.status(404).json({ Message: 'Профиль не найден' });
       }
-      console.log('Profile found:', row);
-      res.json(row);
+      
+      logger.debug('Profile found:', row);
+      res.json({
+        login: row.login,
+        skin_path: row.skin_path,
+        cape_path: row.cape_path
+      });
     }
   );
 });
@@ -227,7 +284,7 @@ app.post('/api/profile', requireAuth, (req, res) => {
     [login, req.session.userId],
     (err, row) => {
       if (err) {
-        console.error('Error checking login:', err);
+        logger.error('Error checking login:', err);
         return res.status(500).json({ Message: 'Ошибка сервера' });
       }
       
@@ -241,9 +298,10 @@ app.post('/api/profile', requireAuth, (req, res) => {
         [login, req.session.userId],
         function(err) {
           if (err) {
-            console.error('Error updating login:', err);
+            logger.error('Error updating login:', err);
             return res.status(500).json({ Message: 'Ошибка обновления профиля' });
           }
+          logger.info('Login updated successfully:', { userId: req.session.userId, newLogin: login });
           res.json({ Message: 'Профиль обновлен' });
         }
       );
@@ -254,22 +312,22 @@ app.post('/api/profile', requireAuth, (req, res) => {
 // Получение скина по нику
 app.get('/api/download/skin/:username', (req, res) => {
   const username = req.params.username;
-  console.log('Getting skin for user:', username);
-
+  logger.debug('Getting skin for user:', username);
+  
   db.get(
     'SELECT skin_path FROM users WHERE login = ?',
     [username],
     (err, row) => {
       if (err || !row || !row.skin_path) {
-        console.log('Skin not found or error:', err);
-        return res.status(404).send('Скин не найден');
+        logger.warn('Skin not found or error:', err);
+        return res.status(404).json({ Message: 'Скин не найден' });
       }
-
+      
       const skinPath = path.join(__dirname, 'public', row.skin_path);
       if (fs.existsSync(skinPath)) {
         res.sendFile(skinPath);
       } else {
-        res.status(404).send('Файл скина не найден');
+        res.status(404).json({ Message: 'Файл скина не найден' });
       }
     }
   );
@@ -278,22 +336,22 @@ app.get('/api/download/skin/:username', (req, res) => {
 // Получение плаща по нику
 app.get('/api/download/cape/:username', (req, res) => {
   const username = req.params.username;
-  console.log('Getting cape for user:', username);
-
+  logger.debug('Getting cape for user:', username);
+  
   db.get(
     'SELECT cape_path FROM users WHERE login = ?',
     [username],
     (err, row) => {
       if (err || !row || !row.cape_path) {
-        console.log('Cape not found or error:', err);
-        return res.status(404).send('Плащ не найден');
+        logger.warn('Cape not found or error:', err);
+        return res.status(404).json({ Message: 'Плащ не найден' });
       }
-
+      
       const capePath = path.join(__dirname, 'public', row.cape_path);
       if (fs.existsSync(capePath)) {
         res.sendFile(capePath);
       } else {
-        res.status(404).send('Файл плаща не найден');
+        res.status(404).json({ Message: 'Файл плаща не найден' });
       }
     }
   );
@@ -312,7 +370,7 @@ app.post('/api/upload/skin', requireAuth, upload.single('skin'), (req, res) => {
     [skinPath, req.session.userId],
     function(err) {
       if (err) {
-        console.error('Error uploading skin:', err);
+        logger.error('Error uploading skin:', err);
         return res.status(500).json({ Message: 'Ошибка загрузки скина' });
       }
       res.json({ 
@@ -337,7 +395,7 @@ app.post('/api/upload/cape', requireAuth, upload.single('cape'), (req, res) => {
     [capePath, req.session.userId],
     function(err) {
       if (err) {
-        console.error('Error uploading cape:', err);
+        logger.error('Error uploading cape:', err);
         return res.status(500).json({ Message: 'Ошибка загрузки плаща' });
       }
       res.json({ 
@@ -352,33 +410,33 @@ app.post('/api/upload/cape', requireAuth, upload.single('cape'), (req, res) => {
 // Авторизация на сайте
 app.post('/login', async (req, res) => {
   const { Login, Password } = req.body;
-  console.log('Login attempt for:', Login);
+  logger.info('Login attempt for:', Login);
   
   db.get(
     'SELECT uuid, password FROM users WHERE login = ?',
     [Login],
     async (err, row) => {
       if (err || !row) {
-        console.log('Login failed: User not found or error:', err);
+        logger.warn('Login failed: User not found or error:', err);
         return res.status(401).json({ Message: 'Неверные данные' });
       }
       
       const match = await bcrypt.compare(Password, row.password);
       if (match) {
-        console.log('Login successful for user:', row.uuid);
+        logger.info('Login successful for user:', row.uuid);
         req.session.userId = row.uuid;
         req.session.save((err) => {
           if (err) {
-            console.error('Error saving session:', err);
+            logger.error('Error saving session:', err);
             return res.status(500).json({ Message: 'Ошибка сервера' });
           }
-          console.log('Session saved successfully');
+          logger.debug('Session saved successfully');
           res.json({
             Message: 'Успешная авторизация'
           });
         });
       } else {
-        console.log('Login failed: Invalid password');
+        logger.warn('Login failed: Invalid password for user:', Login);
         res.status(401).json({ Message: 'Неверные данные' });
       }
     }
@@ -420,14 +478,14 @@ app.get('/api/v1/integrations/news/list', (req, res) => {
     ORDER BY n.published_at DESC
   `, [], (err, rows) => {
     if (err) {
-      console.error('Error fetching news:', err);
+      logger.error('Error fetching news:', err);
       return res.status(500).json({ Message: 'Ошибка получения новостей' });
     }
     var news_list = [];
     var index;
     for (index = 0; index <= rows.length - 1; ++index) {
       var row = rows[index];
-      console.log(row.title);
+      logger.debug('Processing news:', row.title);
       news_list.push({
         id: row.id,
         title: row.title,
@@ -455,10 +513,12 @@ app.get('/api/v1/integrations/news/list', (req, res) => {
 
 // API для общих компонентов
 app.get('/api/components/header', (req, res) => {
+  logger.debug('Serving header component');
   res.sendFile(path.join(__dirname, 'public/components/header.html'));
 });
 
 app.get('/api/components/footer', (req, res) => {
+  logger.debug('Serving footer component');
   res.sendFile(path.join(__dirname, 'public/components/footer.html'));
 });
 
@@ -516,7 +576,7 @@ app.get('/api/launcher/versions', (req, res) => {
       versions: versions
     });
   } catch (error) {
-    console.error('Error reading versions:', error);
+    logger.error('Error reading versions:', error);
     res.status(500).json({ Message: 'Ошибка чтения версий' });
   }
 });
@@ -534,7 +594,7 @@ app.get('/api/launcher/changelog', (req, res) => {
       res.status(404).json({ Message: 'Changelog не найден' });
     }
   } catch (error) {
-    console.error('Error reading changelog:', error);
+    logger.error('Error reading changelog:', error);
     res.status(500).json({ Message: 'Ошибка чтения changelog' });
   }
 });
@@ -557,7 +617,7 @@ app.get('/downloads/:platform/:filename', (req, res) => {
       res.status(404).json({ Message: 'Файл не найден' });
     }
   } catch (error) {
-    console.error('Error downloading file:', error);
+    logger.error('Error downloading file:', error);
     res.status(500).json({ Message: 'Ошибка скачивания файла' });
   }
 });
@@ -565,6 +625,11 @@ app.get('/downloads/:platform/:filename', (req, res) => {
 // Главная страница
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public/index.html'));
+});
+
+// Тестовая страница
+app.get('/test', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public/test.html'));
 });
 
 // Favicon
@@ -610,7 +675,7 @@ app.post('/api/news', requireAdmin, (req, res) => {
     [title, description, slug, content, req.session.userId, image],
     function(err) {
       if (err) {
-        console.error('Error adding news:', err);
+        logger.error('Error adding news:', err);
         return res.status(500).json({ Message: 'Ошибка добавления новости' });
       }
       res.json({ Message: 'Новость успешно добавлена' });
@@ -627,7 +692,7 @@ app.delete('/api/news/:id', requireAdmin, (req, res) => {
     [newsId],
     function(err) {
       if (err) {
-        console.error('Error deleting news:', err);
+        logger.error('Error deleting news:', err);
         return res.status(500).json({ Message: 'Ошибка удаления новости' });
       }
       res.json({ Message: 'Новость успешно удалена' });
@@ -635,7 +700,73 @@ app.delete('/api/news/:id', requireAdmin, (req, res) => {
   );
 });
 
+// API для получения версий лаунчера
+app.get('/api/versions', (req, res) => {
+  try {
+    const platforms = ['windows', 'macos', 'linux'];
+    const versions = {};
+    
+    platforms.forEach(platform => {
+      const platformDir = path.join(__dirname, '..', 'downloads', platform);
+      if (fs.existsSync(platformDir)) {
+        const files = fs.readdirSync(platformDir).filter(file => 
+          file.endsWith('.exe') || file.endsWith('.dmg') || file.endsWith('.AppImage') || file.endsWith('.jar')
+        );
+        
+        if (files.length > 0) {
+          // Берем первый файл как последнюю версию
+          const latestFile = files[0];
+          versions[platform] = {
+            version: latestFile.replace(/\.[^/.]+$/, ''), // Убираем расширение
+            filename: latestFile,
+            url: `/api/download/${platform}/${latestFile}`,
+            size: fs.statSync(path.join(platformDir, latestFile)).size
+          };
+        }
+      }
+    });
+    
+    res.json(versions);
+  } catch (error) {
+    logger.error('Error reading versions:', error);
+    res.status(500).json({ error: 'Ошибка чтения версий' });
+  }
+});
+
+// API для получения changelog
+app.get('/api/changelog', (req, res) => {
+  try {
+    const changelogPath = path.join(__dirname, '..', 'downloads', 'changelog.md');
+    if (fs.existsSync(changelogPath)) {
+      const changelog = fs.readFileSync(changelogPath, 'utf8');
+      res.json({ changelog });
+    } else {
+      res.json({ changelog: '# Changelog\n\nНет информации об изменениях.' });
+    }
+  } catch (error) {
+    logger.error('Error reading changelog:', error);
+    res.status(500).json({ error: 'Ошибка чтения changelog' });
+  }
+});
+
+// API для скачивания файлов
+app.get('/api/download/:platform/:filename', (req, res) => {
+  try {
+    const { platform, filename } = req.params;
+    const filePath = path.join(__dirname, '..', 'downloads', platform, filename);
+    
+    if (fs.existsSync(filePath)) {
+      res.download(filePath);
+    } else {
+      res.status(404).json({ error: 'Файл не найден' });
+    }
+  } catch (error) {
+    logger.error('Error downloading file:', error);
+    res.status(500).json({ error: 'Ошибка скачивания' });
+  }
+});
+
 const PORT = 5013;
 app.listen(PORT, () => {
-  console.log(`Сервер запущен на порту ${PORT}`);
+  logger.info(`Сервер запущен на порту ${PORT}`);
 });

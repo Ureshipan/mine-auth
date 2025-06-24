@@ -400,10 +400,16 @@
             }
         }
 
-        // Инициализация при загрузке страницы
-        document.addEventListener('DOMContentLoaded', () => {
+        // Инициализация после загрузки компонентов
+        function initializePage() {
             checkAuth();
             loadNews();
+        }
+
+        // Ждем загрузки компонентов перед инициализацией страницы
+        document.addEventListener('DOMContentLoaded', () => {
+            // Даем время компонентам загрузиться
+            setTimeout(initializePage, 200);
         });
     </script>
 </body>

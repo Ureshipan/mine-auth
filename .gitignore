@@ -58,8 +58,11 @@ sessions.db
 .env.production.local
 
 # Logs
-logs
+logs/
 *.log
+app.log
+error.log
+combined.log
 
 # Runtime data
 pids
