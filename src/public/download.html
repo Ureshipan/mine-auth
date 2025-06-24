@@ -9,6 +9,7 @@
     <link rel="apple-touch-icon" href="/favicon.ico">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="/css/common.css" rel="stylesheet">
     <style>
         :root {
             --primary: #e29700;
@@ -215,103 +216,90 @@
     </style>
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark">
-        <div class="container">
-            <a class="navbar-brand" href="/">Minysium</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="/">Главная</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/login">Вход</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/register">Регистрация</a>
-                    </li>
-                </ul>
+    <!-- Header будет загружен динамически -->
+    <div id="header"></div>
+
+    <main class="flex-grow-1">
+        <div class="container download-container">
+            <div class="hero-section">
+                <h1 class="hero-title">
+                    <i class="fas fa-download"></i> Загрузка лаунчера
+                </h1>
+                <p class="hero-subtitle">
+                    Скачайте последнюю версию лаунчера Minysium для игры на нашем сервере
+                </p>
             </div>
-        </div>
-    </nav>
 
-    <div class="container download-container">
-        <div class="hero-section">
-            <h1 class="hero-title">
-                <i class="fas fa-download"></i> Загрузка лаунчера
-            </h1>
-            <p class="hero-subtitle">
-                Скачайте последнюю версию лаунчера Minysium для игры на нашем сервере
-            </p>
-        </div>
+            <div class="platform-tabs">
+                <a href="#" class="platform-tab active" data-platform="windows">
+                    <i class="fab fa-windows"></i> Windows
+                </a>
+                <a href="#" class="platform-tab" data-platform="macos" style="opacity: 0.5; pointer-events: none;">
+                    <i class="fab fa-apple"></i> macOS (скоро)
+                </a>
+                <a href="#" class="platform-tab" data-platform="linux" style="opacity: 0.5; pointer-events: none;">
+                    <i class="fab fa-linux"></i> Linux (скоро)
+                </a>
+            </div>
 
-        <div class="platform-tabs">
-            <a href="#" class="platform-tab active" data-platform="windows">
-                <i class="fab fa-windows"></i> Windows
-            </a>
-            <a href="#" class="platform-tab" data-platform="macos" style="opacity: 0.5; pointer-events: none;">
-                <i class="fab fa-apple"></i> macOS (скоро)
-            </a>
-            <a href="#" class="platform-tab" data-platform="linux" style="opacity: 0.5; pointer-events: none;">
-                <i class="fab fa-linux"></i> Linux (скоро)
-            </a>
-        </div>
+            <div id="loading" class="loading">
+                <div class="spinner"></div>
+                <p>Загрузка информации о версиях...</p>
+            </div>
 
-        <div id="loading" class="loading">
-            <div class="spinner"></div>
-            <p>Загрузка информации о версиях...</p>
-        </div>
+            <div id="downloadSection" style="display: none;">
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="download-card">
+                            <div class="version-badge">
+                                Версия <span id="latestVersion">1.0.1</span>
+                                <span class="latest-badge">Последняя</span>
+                            </div>
+                            <h3>Minysium Launcher</h3>
+                            <p>Современный лаунчер для игры на сервере Minysium с поддержкой авторизации, скинов и автоматических обновлений.</p>
+                            
+                            <div class="file-info">
+                                <div class="file-info-item">
+                                    <span>Размер файла:</span>
+                                    <span id="fileSize">15.5 MB</span>
+                                </div>
+                                <div class="file-info-item">
+                                    <span>Дата выпуска:</span>
+                                    <span id="releaseDate">25.06.2025</span>
+                                </div>
+                                <div class="file-info-item">
+                                    <span>MD5:</span>
+                                    <span id="fileMd5" style="font-family: monospace; font-size: 0.9rem;">b2c3d4e5f6789012345678901234567</span>
+                                </div>
+                            </div>
 
-        <div id="downloadSection" style="display: none;">
-            <div class="row">
-                <div class="col-md-12">
-                    <div class="download-card">
-                        <div class="version-badge">
-                            Версия <span id="latestVersion">1.0.1</span>
-                            <span class="latest-badge">Последняя</span>
+                            <a href="#" id="downloadBtn" class="download-btn">
+                                <i class="fas fa-download"></i> Скачать для Windows
+                            </a>
+                            
+                            <button id="showChangelogBtn" class="btn btn-outline-primary mt-3">
+                                <i class="fas fa-file-alt"></i> Показать changelog
+                            </button>
                         </div>
-                        <h3>Minysium Launcher</h3>
-                        <p>Современный лаунчер для игры на сервере Minysium с поддержкой авторизации, скинов и автоматических обновлений.</p>
-                        
-                        <div class="file-info">
-                            <div class="file-info-item">
-                                <span>Размер файла:</span>
-                                <span id="fileSize">15.5 MB</span>
-                            </div>
-                            <div class="file-info-item">
-                                <span>Дата выпуска:</span>
-                                <span id="releaseDate">25.06.2025</span>
-                            </div>
-                            <div class="file-info-item">
-                                <span>MD5:</span>
-                                <span id="fileMd5" style="font-family: monospace; font-size: 0.9rem;">b2c3d4e5f6789012345678901234567</span>
-                            </div>
-                        </div>
-
-                        <a href="#" id="downloadBtn" class="download-btn">
-                            <i class="fas fa-download"></i> Скачать для Windows
-                        </a>
-                        
-                        <button id="showChangelogBtn" class="btn btn-outline-primary mt-3">
-                            <i class="fas fa-file-alt"></i> Показать changelog
-                        </button>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <div id="changelogSection" class="changelog-section" style="display: none;">
-            <h3><i class="fas fa-file-alt"></i> Changelog</h3>
-            <div id="changelogContent" class="changelog-content">
-                <!-- Changelog content will be loaded here -->
+            <div id="changelogSection" class="changelog-section" style="display: none;">
+                <h3><i class="fas fa-file-alt"></i> Changelog</h3>
+                <div id="changelogContent" class="changelog-content">
+                    <!-- Changelog content will be loaded here -->
+                </div>
             </div>
         </div>
-    </div>
+    </main>
+
+    <!-- Footer будет загружен динамически -->
+    <div id="footer"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="/js/components.js"></script>
     <script>
         let versionsData = null;
         let currentVersion = null;

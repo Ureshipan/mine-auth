@@ -453,6 +453,15 @@ app.get('/api/v1/integrations/news/list', (req, res) => {
   });
 });
 
+// API для общих компонентов
+app.get('/api/components/header', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public/components/header.html'));
+});
+
+app.get('/api/components/footer', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public/components/footer.html'));
+});
+
 // API для лаунчера
 // Страница загрузки лаунчера
 app.get('/download', (req, res) => {

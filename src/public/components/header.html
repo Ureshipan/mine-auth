@@ -1,0 +1,88 @@
+<nav class="navbar navbar-expand-lg navbar-dark">
+    <div class="container">
+        <a class="navbar-brand" href="/">Minysium</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="/">Главная</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/download">Скачать лаунчер</a>
+                </li>
+            </ul>
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item" id="authLinks">
+                    <a class="nav-link" href="/login">Вход</a>
+                </li>
+                <li class="nav-item" id="authLinks2">
+                    <a class="nav-link" href="/register">Регистрация</a>
+                </li>
+                <li class="nav-item" id="profileLink" style="display: none;">
+                    <a class="nav-link" href="/profile">Профиль</a>
+                </li>
+                <li class="nav-item" id="logoutLink" style="display: none;">
+                    <a class="nav-link" href="#" id="logoutBtn">Выход</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<script>
+// Проверка авторизации и обновление навигации
+async function updateNavigation() {
+    try {
+        const response = await fetch('/api/auth/check', {
+            credentials: 'include'
+        });
+        const data = await response.json();
+        
+        const authLinks = document.getElementById('authLinks');
+        const authLinks2 = document.getElementById('authLinks2');
+        const profileLink = document.getElementById('profileLink');
+        const logoutLink = document.getElementById('logoutLink');
+        
+        if (data.Success) {
+            // Пользователь авторизован
+            authLinks.style.display = 'none';
+            authLinks2.style.display = 'none';
+            profileLink.style.display = 'block';
+            logoutLink.style.display = 'block';
+        } else {
+            // Пользователь не авторизован
+            authLinks.style.display = 'block';
+            authLinks2.style.display = 'block';
+            profileLink.style.display = 'none';
+            logoutLink.style.display = 'none';
+        }
+    } catch (error) {
+        console.error('Error checking auth:', error);
+    }
+}
+
+// Обработчик выхода
+document.addEventListener('click', async (e) => {
+    if (e.target.id === 'logoutBtn') {
+        e.preventDefault();
+        
+        try {
+            const response = await fetch('/logout', {
+                method: 'POST',
+                credentials: 'include'
+            });
+            
+            if (response.ok) {
+                window.location.href = '/login';
+            }
+        } catch (error) {
+            console.error('Logout error:', error);
+        }
+    }
+});
+
+// Обновляем навигацию после загрузки компонента
+document.addEventListener('DOMContentLoaded', updateNavigation);
+</script> 

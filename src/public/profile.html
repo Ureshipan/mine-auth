@@ -3,9 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Личный кабинет</title>
+    <title>Личный кабинет - Minysium</title>
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="apple-touch-icon" href="/favicon.ico">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/common.css" rel="stylesheet">
     <style>
         :root {
             --primary: #e29700;
@@ -116,75 +119,65 @@
     </style>
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark">
-        <div class="container">
-            <a class="navbar-brand" href="/">Minysium</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="/download">Скачать лаунчер</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#" id="logoutBtn">Выход</a>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
+    <!-- Header будет загружен динамически -->
+    <div id="header"></div>
 
-    <div class="container">
-        <div class="profile-container">
-            <h2 class="mb-4">Личный кабинет</h2>
-            
-            <div class="row">
-                <div class="col-md-4">
-                    <div class="card mb-4">
-                        <div class="card-body text-center">
-                            <div class="preview-container" id="skinPreview"></div>
-                            <h5 class="card-title mt-3">Скин</h5>
-                            <form id="skinForm" class="mt-2">
-                                <input type="file" class="form-control" accept="image/*" id="skinInput">
-                                <!-- <button type="submit" class="btn btn-primary mt-2">Загрузить скин</button> -->
-                            </form>
+    <main class="flex-grow-1">
+        <div class="container">
+            <div class="profile-container">
+                <h2 class="mb-4">Личный кабинет</h2>
+                
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card mb-4">
+                            <div class="card-body text-center">
+                                <div class="preview-container" id="skinPreview"></div>
+                                <h5 class="card-title mt-3">Скин</h5>
+                                <form id="skinForm" class="mt-2">
+                                    <input type="file" class="form-control" accept="image/*" id="skinInput">
+                                    <button type="submit" class="btn btn-primary mt-2">Загрузить скин</button>
+                                </form>
+                            </div>
                         </div>
                     </div>
-                </div>
-                
-                <div class="col-md-4">
-                    <div class="card mb-4">
-                        <div class="card-body text-center">
-                            <div class="preview-container" id="capePreview"></div>
-                            <h5 class="card-title mt-3">Плащ</h5>
-                            <form id="capeForm" class="mt-2">
-                                <input type="file" class="form-control" accept="image/*" id="capeInput">
-                                <!-- <button type="submit" class="btn btn-primary mt-2">Загрузить плащ</button> -->
-                            </form>
+                    
+                    <div class="col-md-4">
+                        <div class="card mb-4">
+                            <div class="card-body text-center">
+                                <div class="preview-container" id="capePreview"></div>
+                                <h5 class="card-title mt-3">Плащ</h5>
+                                <form id="capeForm" class="mt-2">
+                                    <input type="file" class="form-control" accept="image/*" id="capeInput">
+                                    <button type="submit" class="btn btn-primary mt-2">Загрузить плащ</button>
+                                </form>
+                            </div>
                         </div>
                     </div>
-                </div>
-                
-                <div class="col-md-4">
-                    <div class="card">
-                        <div class="card-body">
-                            <h5 class="card-title">Настройки профиля</h5>
-                            <form id="profileForm">
-                                <div class="mb-3">
-                                    <label for="login" class="form-label">Логин</label>
-                                    <input type="text" class="form-control" id="login">
-                                </div>
-                                <button type="submit" class="btn btn-primary">Сохранить</button>
-                            </form>
+                    
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">Настройки профиля</h5>
+                                <form id="profileForm">
+                                    <div class="mb-3">
+                                        <label for="login" class="form-label">Логин</label>
+                                        <input type="text" class="form-control" id="login">
+                                    </div>
+                                    <button type="submit" class="btn btn-primary">Сохранить</button>
+                                </form>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
+    </main>
+
+    <!-- Footer будет загружен динамически -->
+    <div id="footer"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/components.js"></script>
     <script>
         // Проверка авторизации
         async function checkAuth() {
@@ -202,15 +195,18 @@
                 const data = await response.json();
                 console.log('Profile data received:', data);
                 
+                // Заполняем данные профиля
                 document.getElementById('login').value = data.login || '';
+                
+                // Отображаем скин и плащ если есть
                 if (data.skin_path) {
-                    const skinUrl = `/api/download/skin/${data.login}`;
-                    document.getElementById('skinPreview').style.backgroundImage = `url(${skinUrl})`;
+                    document.getElementById('skinPreview').style.backgroundImage = `url(${data.skin_path})`;
                 }
+                
                 if (data.cape_path) {
-                    const capeUrl = `/api/download/cape/${data.login}`;
-                    document.getElementById('capePreview').style.backgroundImage = `url(${capeUrl})`;
+                    document.getElementById('capePreview').style.backgroundImage = `url(${data.cape_path})`;
                 }
+                
             } catch (error) {
                 console.error('Auth check error:', error);
                 window.location.href = '/login';
@@ -220,21 +216,27 @@
         // Загрузка скина
         document.getElementById('skinForm').addEventListener('submit', async (e) => {
             e.preventDefault();
+            const fileInput = document.getElementById('skinInput');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                alert('Выберите файл');
+                return;
+            }
+            
             const formData = new FormData();
-            const skinFile = document.getElementById('skinInput').files[0];
-            if (!skinFile) return;
-
-            formData.append('skin', skinFile);
+            formData.append('skin', file);
+            
             try {
                 const response = await fetch('/api/upload/skin', {
                     method: 'POST',
                     body: formData
                 });
+                
                 const data = await response.json();
                 if (response.ok) {
-                    const skinUrl = `/api/download/skin/${document.getElementById('login').value}`;
-                    document.getElementById('skinPreview').style.backgroundImage = `url(${skinUrl})`;
                     alert('Скин успешно загружен');
+                    document.getElementById('skinPreview').style.backgroundImage = `url(${data.path})`;
                 } else {
                     alert(data.Message);
                 }
@@ -246,21 +248,27 @@
         // Загрузка плаща
         document.getElementById('capeForm').addEventListener('submit', async (e) => {
             e.preventDefault();
+            const fileInput = document.getElementById('capeInput');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                alert('Выберите файл');
+                return;
+            }
+            
             const formData = new FormData();
-            const capeFile = document.getElementById('capeInput').files[0];
-            if (!capeFile) return;
-
-            formData.append('cape', capeFile);
+            formData.append('cape', file);
+            
             try {
                 const response = await fetch('/api/upload/cape', {
                     method: 'POST',
                     body: formData
                 });
+                
                 const data = await response.json();
                 if (response.ok) {
-                    const capeUrl = `/api/download/cape/${document.getElementById('login').value}`;
-                    document.getElementById('capePreview').style.backgroundImage = `url(${capeUrl})`;
                     alert('Плащ успешно загружен');
+                    document.getElementById('capePreview').style.backgroundImage = `url(${data.path})`;
                 } else {
                     alert(data.Message);
                 }
@@ -269,21 +277,23 @@
             }
         });
 
-        // Обновление профиля
+        // Сохранение профиля
         document.getElementById('profileForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const login = document.getElementById('login').value;
+            
             try {
                 const response = await fetch('/api/profile', {
-                    method: 'POST',
+                    method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({ login })
                 });
+                
                 const data = await response.json();
                 if (response.ok) {
-                    alert('Профиль обновлен');
+                    alert('Профиль успешно обновлен');
                 } else {
                     alert(data.Message);
                 }
@@ -293,22 +303,26 @@
         });
 
         // Выход из аккаунта
-        document.getElementById('logoutBtn').addEventListener('click', async (e) => {
-            e.preventDefault();
-            try {
-                const response = await fetch('/logout', {
-                    method: 'POST'
-                });
-                if (response.ok) {
-                    window.location.href = '/login';
+        document.addEventListener('click', async (e) => {
+            if (e.target.id === 'logoutBtn') {
+                e.preventDefault();
+                
+                try {
+                    const response = await fetch('/logout', {
+                        method: 'POST'
+                    });
+                    
+                    if (response.ok) {
+                        window.location.href = '/login';
+                    }
+                } catch (error) {
+                    console.error('Logout error:', error);
                 }
-            } catch (error) {
-                alert('Ошибка при выходе из аккаунта');
             }
         });
 
-        // Проверяем авторизацию при загрузке страницы
-        checkAuth();
+        // Инициализация при загрузке страницы
+        document.addEventListener('DOMContentLoaded', checkAuth);
     </script>
 </body>
 </html> 

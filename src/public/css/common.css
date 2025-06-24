@@ -1,0 +1,138 @@
+:root {
+    --primary: #e29700;
+    --primary-dark: #8b6508;
+    --primary-light: #ffa900;
+    --bg-dark: #1a1a1a;
+    --bg-darker: #141414;
+    --text-light: #e0e0e0;
+    --success: #28a745;
+    --info: #17a2b8;
+}
+
+body {
+    background-color: var(--bg-dark);
+    color: var(--text-light);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.navbar {
+    background-color: var(--bg-darker) !important;
+    border-bottom: 2px solid var(--primary);
+}
+
+.navbar-brand {
+    color: var(--primary) !important;
+    font-weight: bold;
+    font-size: 1.5rem;
+}
+
+.nav-link {
+    color: var(--text-light) !important;
+    transition: color 0.3s ease;
+}
+
+.nav-link:hover {
+    color: var(--primary) !important;
+}
+
+.navbar-toggler {
+    border-color: var(--primary);
+}
+
+.navbar-toggler:focus {
+    box-shadow: 0 0 0 0.25rem rgba(226, 151, 0, 0.25);
+}
+
+.footer {
+    background-color: var(--bg-darker);
+    border-top: 1px solid var(--primary-dark);
+    margin-top: auto;
+}
+
+.footer a:hover {
+    color: var(--primary) !important;
+}
+
+/* Общие стили для форм */
+.form-control {
+    background-color: var(--bg-dark);
+    border: 1px solid var(--primary-dark);
+    color: var(--text-light);
+}
+
+.form-control:focus {
+    background-color: var(--bg-dark);
+    border-color: var(--primary);
+    color: var(--text-light);
+    box-shadow: 0 0 0 0.25rem rgba(226, 151, 0, 0.25);
+}
+
+.form-label {
+    color: var(--text-light);
+}
+
+.btn-primary {
+    background-color: var(--primary);
+    border-color: var(--primary-dark);
+    color: var(--bg-darker);
+    font-weight: bold;
+}
+
+.btn-primary:hover {
+    background-color: var(--primary-light);
+    border-color: var(--primary);
+    color: var(--bg-darker);
+}
+
+.btn-outline-primary {
+    color: var(--primary);
+    border-color: var(--primary);
+}
+
+.btn-outline-primary:hover {
+    background-color: var(--primary);
+    border-color: var(--primary);
+    color: var(--bg-darker);
+}
+
+/* Общие стили для карточек */
+.card {
+    background-color: var(--bg-darker);
+    border: 1px solid var(--primary-dark);
+}
+
+.card-body {
+    color: var(--text-light);
+}
+
+.card-title {
+    color: var(--primary);
+}
+
+/* Общие стили для текста */
+h1, h2, h3, h4, h5, h6 {
+    color: var(--primary);
+}
+
+.text-decoration-none {
+    color: var(--primary) !important;
+}
+
+.text-decoration-none:hover {
+    color: var(--primary-light) !important;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .navbar-nav {
+        text-align: center;
+    }
+    
+    .footer .text-end {
+        text-align: center !important;
+        margin-top: 1rem;
+    }
+} 
