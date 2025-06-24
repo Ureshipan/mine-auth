@@ -459,27 +459,63 @@ app.get('/download', (req, res) => {
   res.sendFile(path.join(__dirname, 'public/download.html'));
 });
 
-// Получение информации о версиях лаунчера
+// Получение информации о версиях лаунчера (автоматическое определение)
 app.get('/api/launcher/versions', (req, res) => {
   try {
-    const versionsPath = path.join(__dirname, '../downloads/versions.json');
-    if (fs.existsSync(versionsPath)) {
-      const versionsData = JSON.parse(fs.readFileSync(versionsPath, 'utf8'));
-      res.json(versionsData);
-    } else {
-      res.status(404).json({ Message: 'Файл версий не найден' });
-    }
+    const platforms = ['windows', 'macos', 'linux'];
+    const versions = [];
+    
+    platforms.forEach(platform => {
+      const platformPath = path.join(__dirname, `../downloads/${platform}`);
+      if (fs.existsSync(platformPath)) {
+        const files = fs.readdirSync(platformPath);
+        const exeFiles = files.filter(file => file.endsWith('.exe') || file.endsWith('.dmg') || file.endsWith('.AppImage'));
+        
+        if (exeFiles.length > 0) {
+          // Берем первый файл как последнюю версию
+          const latestFile = exeFiles[0];
+          const filePath = path.join(platformPath, latestFile);
+          const stats = fs.statSync(filePath);
+          
+          // Извлекаем версию из имени файла
+          const versionMatch = latestFile.match(/v?(\d+\.\d+\.\d+)/);
+          const version = versionMatch ? versionMatch[1] : '1.0.0';
+          
+          // Вычисляем MD5
+          const crypto = require('crypto');
+          const fileBuffer = fs.readFileSync(filePath);
+          const hashSum = crypto.createHash('md5');
+          hashSum.update(fileBuffer);
+          const md5 = hashSum.digest('hex');
+          
+          versions.push({
+            version: version,
+            platform: platform,
+            filename: latestFile,
+            size: stats.size,
+            md5: md5,
+            releaseDate: stats.mtime.toISOString().split('T')[0],
+            downloadUrl: `/downloads/${platform}/${latestFile}`,
+            isLatest: true
+          });
+        }
+      }
+    });
+    
+    res.json({
+      latest: versions.length > 0 ? versions[0].version : '1.0.0',
+      versions: versions
+    });
   } catch (error) {
     console.error('Error reading versions:', error);
     res.status(500).json({ Message: 'Ошибка чтения версий' });
   }
 });
 
-// Получение changelog для конкретной версии
-app.get('/api/launcher/changelog/:version', (req, res) => {
+// Получение единого changelog
+app.get('/api/launcher/changelog', (req, res) => {
   try {
-    const version = req.params.version;
-    const changelogPath = path.join(__dirname, `../downloads/changelog/v${version}.md`);
+    const changelogPath = path.join(__dirname, '../downloads/changelog.md');
     
     if (fs.existsSync(changelogPath)) {
       const changelog = fs.readFileSync(changelogPath, 'utf8');

@@ -342,14 +342,23 @@
 
         // Отображение последней версии
         function displayLatestVersion() {
-            const latest = versionsData.versions.find(v => v.isLatest);
-            if (latest) {
+            if (versionsData.versions.length > 0) {
+                const latest = versionsData.versions[0]; // Первая версия всегда последняя
                 currentVersion = latest;
                 document.getElementById('latestVersion').textContent = latest.version;
                 document.getElementById('fileSize').textContent = formatFileSize(latest.size);
                 document.getElementById('releaseDate').textContent = formatDate(latest.releaseDate);
                 document.getElementById('fileMd5').textContent = latest.md5;
                 document.getElementById('downloadBtn').href = latest.downloadUrl;
+                
+                // Обновляем текст кнопки в зависимости от платформы
+                const platformNames = {
+                    'windows': 'Windows',
+                    'macos': 'macOS',
+                    'linux': 'Linux'
+                };
+                const platformName = platformNames[latest.platform] || latest.platform;
+                document.getElementById('downloadBtn').innerHTML = `<i class="fas fa-download"></i> Скачать для ${platformName}`;
             }
         }
 
@@ -361,7 +370,13 @@
             versionsData.versions.forEach(version => {
                 const option = document.createElement('option');
                 option.value = version.version;
-                option.textContent = `v${version.version}${version.isLatest ? ' (Последняя)' : ''}`;
+                const platformNames = {
+                    'windows': 'Windows',
+                    'macos': 'macOS',
+                    'linux': 'Linux'
+                };
+                const platformName = platformNames[version.platform] || version.platform;
+                option.textContent = `v${version.version} (${platformName})`;
                 selector.appendChild(option);
             });
         }
@@ -381,9 +396,9 @@
         }
 
         // Загрузка changelog
-        async function loadChangelog(version) {
+        async function loadChangelog() {
             try {
-                const response = await fetch(`/api/launcher/changelog/${version}`);
+                const response = await fetch('/api/launcher/changelog');
                 const changelog = await response.text();
                 const htmlContent = marked.parse(changelog);
                 document.getElementById('changelogContent').innerHTML = htmlContent;
@@ -396,8 +411,7 @@
 
         // Обработчики событий
         document.getElementById('showChangelogBtn').addEventListener('click', () => {
-            const selectedVersion = document.getElementById('versionSelector').value;
-            loadChangelog(selectedVersion);
+            loadChangelog();
         });
 
         document.getElementById('versionSelector').addEventListener('change', (e) => {
@@ -408,6 +422,15 @@
                 document.getElementById('releaseDate').textContent = formatDate(selectedVersion.releaseDate);
                 document.getElementById('fileMd5').textContent = selectedVersion.md5;
                 document.getElementById('downloadBtn').href = selectedVersion.downloadUrl;
+                
+                // Обновляем текст кнопки
+                const platformNames = {
+                    'windows': 'Windows',
+                    'macos': 'macOS',
+                    'linux': 'Linux'
+                };
+                const platformName = platformNames[selectedVersion.platform] || selectedVersion.platform;
+                document.getElementById('downloadBtn').innerHTML = `<i class="fas fa-download"></i> Скачать для ${platformName}`;
             }
         });
 
