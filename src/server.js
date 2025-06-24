@@ -453,6 +453,70 @@ app.get('/api/v1/integrations/news/list', (req, res) => {
   });
 });
 
+// API для лаунчера
+// Страница загрузки лаунчера
+app.get('/download', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public/download.html'));
+});
+
+// Получение информации о версиях лаунчера
+app.get('/api/launcher/versions', (req, res) => {
+  try {
+    const versionsPath = path.join(__dirname, '../downloads/versions.json');
+    if (fs.existsSync(versionsPath)) {
+      const versionsData = JSON.parse(fs.readFileSync(versionsPath, 'utf8'));
+      res.json(versionsData);
+    } else {
+      res.status(404).json({ Message: 'Файл версий не найден' });
+    }
+  } catch (error) {
+    console.error('Error reading versions:', error);
+    res.status(500).json({ Message: 'Ошибка чтения версий' });
+  }
+});
+
+// Получение changelog для конкретной версии
+app.get('/api/launcher/changelog/:version', (req, res) => {
+  try {
+    const version = req.params.version;
+    const changelogPath = path.join(__dirname, `../downloads/changelog/v${version}.md`);
+    
+    if (fs.existsSync(changelogPath)) {
+      const changelog = fs.readFileSync(changelogPath, 'utf8');
+      res.setHeader('Content-Type', 'text/plain');
+      res.send(changelog);
+    } else {
+      res.status(404).json({ Message: 'Changelog не найден' });
+    }
+  } catch (error) {
+    console.error('Error reading changelog:', error);
+    res.status(500).json({ Message: 'Ошибка чтения changelog' });
+  }
+});
+
+// Скачивание файла лаунчера
+app.get('/downloads/:platform/:filename', (req, res) => {
+  try {
+    const { platform, filename } = req.params;
+    const filePath = path.join(__dirname, `../downloads/${platform}/${filename}`);
+    
+    if (fs.existsSync(filePath)) {
+      // Устанавливаем заголовки для скачивания
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      res.setHeader('Content-Type', 'application/octet-stream');
+      
+      // Отправляем файл
+      const fileStream = fs.createReadStream(filePath);
+      fileStream.pipe(res);
+    } else {
+      res.status(404).json({ Message: 'Файл не найден' });
+    }
+  } catch (error) {
+    console.error('Error downloading file:', error);
+    res.status(500).json({ Message: 'Ошибка скачивания файла' });
+  }
+});
+
 // Главная страница
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public/index.html'));

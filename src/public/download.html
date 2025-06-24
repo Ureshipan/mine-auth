@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Загрузка лаунчера - Minysium</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="apple-touch-icon" href="/favicon.ico">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #e29700;
+            --primary-dark: #8b6508;
+            --primary-light: #ffa900;
+            --bg-dark: #1a1a1a;
+            --bg-darker: #141414;
+            --text-light: #e0e0e0;
+            --success: #28a745;
+            --info: #17a2b8;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .navbar {
+            background-color: var(--bg-darker) !important;
+            border-bottom: 2px solid var(--primary);
+        }
+
+        .navbar-brand {
+            color: var(--primary) !important;
+        }
+
+        .nav-link {
+            color: var(--text-light) !important;
+        }
+
+        .nav-link:hover {
+            color: var(--primary) !important;
+        }
+
+        .download-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 2rem;
+        }
+
+        .hero-section {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 3rem 0;
+            background: linear-gradient(135deg, var(--bg-darker) 0%, var(--bg-dark) 100%);
+            border-radius: 15px;
+            border: 1px solid var(--primary-dark);
+        }
+
+        .hero-title {
+            color: var(--primary);
+            font-size: 3rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+        }
+
+        .hero-subtitle {
+            color: var(--text-light);
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+        }
+
+        .download-card {
+            background: var(--bg-darker);
+            border: 1px solid var(--primary-dark);
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .download-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(226, 151, 0, 0.2);
+        }
+
+        .version-badge {
+            background: var(--primary);
+            color: var(--bg-darker);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: bold;
+            display: inline-block;
+            margin-bottom: 1rem;
+        }
+
+        .latest-badge {
+            background: var(--success);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            margin-left: 0.5rem;
+        }
+
+        .download-btn {
+            background: var(--primary);
+            color: var(--bg-darker);
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 10px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .download-btn:hover {
+            background: var(--primary-light);
+            color: var(--bg-darker);
+            transform: scale(1.05);
+        }
+
+        .file-info {
+            background: var(--bg-dark);
+            border-radius: 10px;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+
+        .file-info-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+
+        .changelog-section {
+            background: var(--bg-darker);
+            border: 1px solid var(--primary-dark);
+            border-radius: 15px;
+            padding: 2rem;
+            margin-top: 2rem;
+        }
+
+        .changelog-content {
+            background: var(--bg-dark);
+            border-radius: 10px;
+            padding: 1.5rem;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .changelog-content h1,
+        .changelog-content h2,
+        .changelog-content h3 {
+            color: var(--primary);
+        }
+
+        .changelog-content ul {
+            color: var(--text-light);
+        }
+
+        .platform-tabs {
+            margin-bottom: 2rem;
+        }
+
+        .platform-tab {
+            background: var(--bg-dark);
+            color: var(--text-light);
+            border: 1px solid var(--primary-dark);
+            padding: 0.75rem 1.5rem;
+            margin-right: 0.5rem;
+            border-radius: 10px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .platform-tab.active,
+        .platform-tab:hover {
+            background: var(--primary);
+            color: var(--bg-darker);
+        }
+
+        .version-selector {
+            background: var(--bg-dark);
+            color: var(--text-light);
+            border: 1px solid var(--primary-dark);
+            border-radius: 10px;
+            padding: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .spinner {
+            border: 4px solid var(--bg-dark);
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">Minysium</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Главная</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/login">Вход</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/register">Регистрация</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container download-container">
+        <div class="hero-section">
+            <h1 class="hero-title">
+                <i class="fas fa-download"></i> Загрузка лаунчера
+            </h1>
+            <p class="hero-subtitle">
+                Скачайте последнюю версию лаунчера Minysium для игры на нашем сервере
+            </p>
+        </div>
+
+        <div class="platform-tabs">
+            <a href="#" class="platform-tab active" data-platform="windows">
+                <i class="fab fa-windows"></i> Windows
+            </a>
+            <a href="#" class="platform-tab" data-platform="macos" style="opacity: 0.5; pointer-events: none;">
+                <i class="fab fa-apple"></i> macOS (скоро)
+            </a>
+            <a href="#" class="platform-tab" data-platform="linux" style="opacity: 0.5; pointer-events: none;">
+                <i class="fab fa-linux"></i> Linux (скоро)
+            </a>
+        </div>
+
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p>Загрузка информации о версиях...</p>
+        </div>
+
+        <div id="downloadSection" style="display: none;">
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="download-card">
+                        <div class="version-badge">
+                            Версия <span id="latestVersion">1.0.1</span>
+                            <span class="latest-badge">Последняя</span>
+                        </div>
+                        <h3>Minysium Launcher</h3>
+                        <p>Современный лаунчер для игры на сервере Minysium с поддержкой авторизации, скинов и автоматических обновлений.</p>
+                        
+                        <div class="file-info">
+                            <div class="file-info-item">
+                                <span>Размер файла:</span>
+                                <span id="fileSize">15.5 MB</span>
+                            </div>
+                            <div class="file-info-item">
+                                <span>Дата выпуска:</span>
+                                <span id="releaseDate">25.06.2025</span>
+                            </div>
+                            <div class="file-info-item">
+                                <span>MD5:</span>
+                                <span id="fileMd5" style="font-family: monospace; font-size: 0.9rem;">b2c3d4e5f6789012345678901234567</span>
+                            </div>
+                        </div>
+
+                        <a href="#" id="downloadBtn" class="download-btn">
+                            <i class="fas fa-download"></i> Скачать для Windows
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="download-card">
+                        <h4><i class="fas fa-history"></i> Предыдущие версии</h4>
+                        <select id="versionSelector" class="version-selector">
+                            <option value="1.0.1">v1.0.1 (Последняя)</option>
+                            <option value="1.0.0">v1.0.0</option>
+                        </select>
+                        <button id="showChangelogBtn" class="btn btn-outline-primary w-100">
+                            <i class="fas fa-file-alt"></i> Показать changelog
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="changelogSection" class="changelog-section" style="display: none;">
+            <h3><i class="fas fa-file-alt"></i> Changelog</h3>
+            <div id="changelogContent" class="changelog-content">
+                <!-- Changelog content will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script>
+        let versionsData = null;
+        let currentVersion = null;
+
+        // Загрузка данных о версиях
+        async function loadVersions() {
+            try {
+                const response = await fetch('/api/launcher/versions');
+                versionsData = await response.json();
+                displayLatestVersion();
+                populateVersionSelector();
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('downloadSection').style.display = 'block';
+            } catch (error) {
+                console.error('Error loading versions:', error);
+                document.getElementById('loading').innerHTML = '<p>Ошибка загрузки данных</p>';
+            }
+        }
+
+        // Отображение последней версии
+        function displayLatestVersion() {
+            const latest = versionsData.versions.find(v => v.isLatest);
+            if (latest) {
+                currentVersion = latest;
+                document.getElementById('latestVersion').textContent = latest.version;
+                document.getElementById('fileSize').textContent = formatFileSize(latest.size);
+                document.getElementById('releaseDate').textContent = formatDate(latest.releaseDate);
+                document.getElementById('fileMd5').textContent = latest.md5;
+                document.getElementById('downloadBtn').href = latest.downloadUrl;
+            }
+        }
+
+        // Заполнение селектора версий
+        function populateVersionSelector() {
+            const selector = document.getElementById('versionSelector');
+            selector.innerHTML = '';
+            
+            versionsData.versions.forEach(version => {
+                const option = document.createElement('option');
+                option.value = version.version;
+                option.textContent = `v${version.version}${version.isLatest ? ' (Последняя)' : ''}`;
+                selector.appendChild(option);
+            });
+        }
+
+        // Форматирование размера файла
+        function formatFileSize(bytes) {
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            if (bytes === 0) return '0 Bytes';
+            const i = Math.floor(Math.log(bytes) / Math.log(1024));
+            return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i];
+        }
+
+        // Форматирование даты
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('ru-RU');
+        }
+
+        // Загрузка changelog
+        async function loadChangelog(version) {
+            try {
+                const response = await fetch(`/api/launcher/changelog/${version}`);
+                const changelog = await response.text();
+                const htmlContent = marked.parse(changelog);
+                document.getElementById('changelogContent').innerHTML = htmlContent;
+                document.getElementById('changelogSection').style.display = 'block';
+            } catch (error) {
+                console.error('Error loading changelog:', error);
+                document.getElementById('changelogContent').innerHTML = '<p>Ошибка загрузки changelog</p>';
+            }
+        }
+
+        // Обработчики событий
+        document.getElementById('showChangelogBtn').addEventListener('click', () => {
+            const selectedVersion = document.getElementById('versionSelector').value;
+            loadChangelog(selectedVersion);
+        });
+
+        document.getElementById('versionSelector').addEventListener('change', (e) => {
+            const selectedVersion = versionsData.versions.find(v => v.version === e.target.value);
+            if (selectedVersion) {
+                currentVersion = selectedVersion;
+                document.getElementById('fileSize').textContent = formatFileSize(selectedVersion.size);
+                document.getElementById('releaseDate').textContent = formatDate(selectedVersion.releaseDate);
+                document.getElementById('fileMd5').textContent = selectedVersion.md5;
+                document.getElementById('downloadBtn').href = selectedVersion.downloadUrl;
+            }
+        });
+
+        // Загрузка данных при загрузке страницы
+        document.addEventListener('DOMContentLoaded', loadVersions);
+    </script>
+</body>
+</html> 
