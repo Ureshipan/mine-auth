@@ -836,6 +836,7 @@ app.get('/api/servers', (req, res) => {
         let online = '';
         let status = '🟢 Онлайн';
         let features = [];
+        let priority = 0; // По умолчанию приоритет 0
         
         let inFeatures = false;
         let inDescription = false;
@@ -861,6 +862,31 @@ app.get('/api/servers', (req, res) => {
             } else if (line) {
               description = line;
               inDescription = false;
+            }
+            continue;
+          }
+          
+          // Приоритет
+          if (line.toLowerCase().includes('приоритет')) {
+            // 1. Ищем приоритет в той же строке
+            let priorityMatch = line.match(/приоритет[:\s]+(\d+)/i);
+            if (!priorityMatch) {
+              priorityMatch = line.match(/приоритет\s*\n\s*(\d+)/i);
+            }
+            if (priorityMatch) {
+              priority = parseInt(priorityMatch[1]);
+            } else {
+              // 2. Ищем приоритет в следующей непустой строке
+              for (let j = i + 1; j < lines.length; j++) {
+                const nextLine = lines[j].trim();
+                if (nextLine) {
+                  const nextPriorityMatch = nextLine.match(/^(\d+)$/);
+                  if (nextPriorityMatch) {
+                    priority = parseInt(nextPriorityMatch[1]);
+                  }
+                  break;
+                }
+              }
             }
             continue;
           }
@@ -1010,6 +1036,7 @@ app.get('/api/servers', (req, res) => {
           online: online,
           status: status,
           features: features,
+          priority: priority,
           hasIcon: fs.existsSync(iconPath)
         });
         
@@ -1017,6 +1044,9 @@ app.get('/api/servers', (req, res) => {
         logger.error(`Error parsing server file ${file}:`, error);
       }
     });
+    
+    // Сортируем серверы по приоритету (высокий приоритет = низкий номер)
+    servers.sort((a, b) => a.priority - b.priority);
     
     res.json(servers);
     
