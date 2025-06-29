@@ -112,3 +112,8 @@ Thumbs.db
 
 # Downloads folder (launcher files and changelog)
 downloads/
+
+# Servers folder - exclude all content except README
+src/servers/*.md
+!src/servers/README.md
+src/public/servers/*.png
