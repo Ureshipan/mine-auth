@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minecraft Auth - Сервера</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="apple-touch-icon" href="/favicon.ico">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/common.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #e29700;
+            --dark-primary: #8b6508;
+            --light-primary: #ffa900;
+            --dark-bg: #1a1a1a;
+            --darker-bg: #141414;
+            --light-text: #e0e0e0;
+        }
+
+        .servers-container {
+            margin-top: 2rem;
+        }
+
+        .server-card {
+            background-color: var(--darker-bg);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: 1px solid #333;
+        }
+
+        .server-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+            border-color: var(--primary-color);
+        }
+
+        .server-header {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .server-icon {
+            flex: 0 0 80px;
+            height: 80px;
+            border-radius: 12px;
+            background-color: var(--dark-bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border: 2px solid var(--primary-color);
+        }
+
+        .server-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .server-icon .default-icon {
+            font-size: 2rem;
+            color: var(--primary-color);
+        }
+
+        .server-info {
+            flex: 1;
+        }
+
+        .server-title {
+            color: var(--primary-color);
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin: 0 0 0.5rem 0;
+        }
+
+        .server-status {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .status-online {
+            background-color: #28a745;
+            color: white;
+        }
+
+        .status-maintenance {
+            background-color: #ffc107;
+            color: #212529;
+        }
+
+        .status-offline {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        .server-meta {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--light-text);
+            font-size: 0.9rem;
+        }
+
+        .meta-label {
+            color: #888;
+        }
+
+        .server-description {
+            color: var(--light-text);
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+        }
+
+        .server-features {
+            margin-bottom: 1.5rem;
+        }
+
+        .features-title {
+            color: var(--primary-color);
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .features-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .feature-item {
+            background-color: var(--dark-bg);
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            color: var(--light-text);
+            border: 1px solid #444;
+        }
+
+        .server-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--dark-primary);
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background-color: transparent;
+            color: var(--primary-color);
+            border: 2px solid var(--primary-color);
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .copy-ip {
+            background-color: var(--dark-bg);
+            border: 1px solid #444;
+            color: var(--light-text);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .copy-ip:hover {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .copy-ip.copied {
+            background-color: #28a745;
+            color: white;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            color: var(--light-text);
+        }
+
+        .error {
+            text-align: center;
+            padding: 3rem;
+            color: #dc3545;
+        }
+
+        @media (max-width: 768px) {
+            .server-header {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .server-icon {
+                flex: 0 0 60px;
+                height: 60px;
+            }
+            
+            .server-actions {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .server-meta {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header будет загружен динамически -->
+    <div id="header"></div>
+
+    <main class="flex-grow-1">
+        <div class="container">
+            <div class="servers-container">
+                <h1 class="text-center mb-4" style="color: var(--primary-color);">Наши Сервера</h1>
+                <p class="text-center mb-5" style="color: var(--light-text);">
+                    Выберите сервер для игры и присоединяйтесь к нашему сообществу!
+                </p>
+                
+                <div id="serversList">
+                    <div class="loading">
+                        <div class="spinner-border text-warning" role="status">
+                            <span class="visually-hidden">Загрузка...</span>
+                        </div>
+                        <p class="mt-3">Загрузка серверов...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer будет загружен динамически -->
+    <div id="footer"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/components.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script>
+        // Загрузка компонентов
+        loadComponent('header', '/components/header.html');
+        loadComponent('footer', '/components/footer.html');
+
+        // Функция для копирования IP адреса
+        function copyToClipboard(text, button) {
+            navigator.clipboard.writeText(text).then(() => {
+                const originalText = button.textContent;
+                button.textContent = 'Скопировано!';
+                button.classList.add('copied');
+                
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.classList.remove('copied');
+                }, 2000);
+            }).catch(err => {
+                console.error('Ошибка копирования:', err);
+                alert('Не удалось скопировать IP адрес');
+            });
+        }
+
+        // Функция для определения статуса сервера
+        function getStatusClass(status) {
+            if (status.includes('Онлайн')) return 'status-online';
+            if (status.includes('Техническое обслуживание')) return 'status-maintenance';
+            return 'status-offline';
+        }
+
+        // Функция для загрузки и отображения серверов
+        async function loadServers() {
+            try {
+                const response = await fetch('/api/servers');
+                if (!response.ok) {
+                    throw new Error('Ошибка загрузки серверов');
+                }
+                
+                const servers = await response.json();
+                const serversList = document.getElementById('serversList');
+                
+                if (servers.length === 0) {
+                    serversList.innerHTML = `
+                        <div class="error">
+                            <h3>Сервера не найдены</h3>
+                            <p>Попробуйте обновить страницу позже</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                serversList.innerHTML = servers.map(server => `
+                    <div class="server-card">
+                        <div class="server-header">
+                            <div class="server-icon">
+                                ${server.hasIcon ? 
+                                    `<img src="/servers/${server.name}.png" alt="${server.title}" onerror="this.parentElement.innerHTML='<div class=\\'default-icon\\'>🎮</div>'">` :
+                                    `<div class="default-icon">🎮</div>`
+                                }
+                            </div>
+                            <div class="server-info">
+                                <h2 class="server-title">${server.title}</h2>
+                                <div class="server-status ${getStatusClass(server.status)}">${server.status}</div>
+                                <div class="server-meta">
+                                    <div class="meta-item">
+                                        <span class="meta-label">IP:</span>
+                                        <span class="copy-ip" onclick="copyToClipboard('${server.ip}', this)">${server.ip}</span>
+                                    </div>
+                                    <div class="meta-item">
+                                        <span class="meta-label">Версия:</span>
+                                        <span>${server.version}</span>
+                                    </div>
+                                    <div class="meta-item">
+                                        <span class="meta-label">Онлайн:</span>
+                                        <span>${server.online}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="server-description">
+                            ${server.description}
+                        </div>
+                        
+                        ${server.features ? `
+                            <div class="server-features">
+                                <div class="features-title">Особенности:</div>
+                                <div class="features-list">
+                                    ${server.features.map(feature => `<span class="feature-item">${feature}</span>`).join('')}
+                                </div>
+                            </div>
+                        ` : ''}
+                        
+                        <div class="server-actions">
+                            <button class="btn btn-primary" onclick="copyToClipboard('${server.ip}', this)">
+                                📋 Скопировать IP
+                            </button>
+                            <a href="minecraft://${server.ip}" class="btn btn-secondary">
+                                🎮 Присоединиться
+                            </a>
+                        </div>
+                    </div>
+                `).join('');
+
+            } catch (error) {
+                console.error('Ошибка загрузки серверов:', error);
+                document.getElementById('serversList').innerHTML = `
+                    <div class="error">
+                        <h3>Ошибка загрузки</h3>
+                        <p>Не удалось загрузить список серверов. Попробуйте обновить страницу.</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Загружаем сервера при загрузке страницы
+        document.addEventListener('DOMContentLoaded', loadServers);
+    </script>
+</body>
+</html> 

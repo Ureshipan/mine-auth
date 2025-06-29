@@ -807,6 +807,181 @@ app.get('/api/download/:platform/:filename', (req, res) => {
   }
 });
 
+// API для получения списка серверов
+app.get('/api/servers', (req, res) => {
+  try {
+    const serversDir = path.join(__dirname, 'servers');
+    const servers = [];
+    
+    if (!fs.existsSync(serversDir)) {
+      return res.json([]);
+    }
+    
+    const mdFiles = fs.readdirSync(serversDir).filter(file => file.endsWith('.md'));
+    
+    mdFiles.forEach(file => {
+      try {
+        const serverName = file.replace('.md', '');
+        const mdPath = path.join(serversDir, file);
+        const iconPath = path.join(__dirname, 'public', 'servers', `${serverName}.png`);
+        
+        const content = fs.readFileSync(mdPath, 'utf8');
+        
+        // Парсим markdown для извлечения информации
+        const lines = content.split('\n');
+        let title = serverName;
+        let description = '';
+        let ip = '';
+        let version = '';
+        let online = '';
+        let status = '🟢 Онлайн';
+        let features = [];
+        
+        let inFeatures = false;
+        let inDescription = false;
+        
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i].trim();
+          
+          // Заголовок
+          if (line.startsWith('# ') && i === 0) {
+            title = line.substring(2).trim();
+            continue;
+          }
+          
+          // Описание (ищем после заголовка "## Описание")
+          if (line.startsWith('## Описание')) {
+            inDescription = true;
+            continue;
+          }
+          
+          if (inDescription) {
+            if (line.startsWith('##')) {
+              inDescription = false;
+            } else if (line) {
+              description = line;
+              inDescription = false;
+            }
+            continue;
+          }
+          
+          // IP адрес
+          if (line.includes('IP адрес') || line.includes('IP:')) {
+            const ipMatch = line.match(/`([^`]+)`/);
+            if (ipMatch) {
+              ip = ipMatch[1];
+            }
+            continue;
+          }
+          
+          // Версия
+          if (line.includes('Версия')) {
+            const versionMatch = line.match(/Версия\s*\n\s*([^\n]+)/);
+            if (versionMatch) {
+              version = versionMatch[1].trim();
+            } else {
+              // Ищем версию в той же строке
+              const verMatch = line.match(/Версия[:\s]+([^\n]+)/);
+              if (verMatch) {
+                version = verMatch[1].trim();
+              }
+            }
+            continue;
+          }
+          
+          // Онлайн
+          if (line.includes('Онлайн')) {
+            const onlineMatch = line.match(/Онлайн\s*\n\s*([^\n]+)/);
+            if (onlineMatch) {
+              online = onlineMatch[1].trim();
+            } else {
+              // Ищем онлайн в той же строке
+              const onlMatch = line.match(/Онлайн[:\s]+([^\n]+)/);
+              if (onlMatch) {
+                online = onlMatch[1].trim();
+              }
+            }
+            continue;
+          }
+          
+          // Статус
+          if (line.includes('Статус')) {
+            const statusMatch = line.match(/Статус\s*\n\s*([^\n]+)/);
+            if (statusMatch) {
+              status = statusMatch[1].trim();
+            } else {
+              // Ищем статус в той же строке
+              const statMatch = line.match(/Статус[:\s]+([^\n]+)/);
+              if (statMatch) {
+                status = statMatch[1].trim();
+              }
+            }
+            continue;
+          }
+          
+          // Особенности
+          if (line.includes('Особенности') || line.includes('Features')) {
+            inFeatures = true;
+            continue;
+          }
+          
+          if (inFeatures && line.startsWith('- ')) {
+            features.push(line.substring(2).trim());
+            continue;
+          }
+          
+          if (inFeatures && line === '') {
+            inFeatures = false;
+            continue;
+          }
+          
+          if (inFeatures && line.startsWith('##')) {
+            inFeatures = false;
+            continue;
+          }
+        }
+        
+        // Если описание не найдено, берем первый параграф после заголовка
+        if (!description) {
+          for (let i = 1; i < lines.length; i++) {
+            const line = lines[i].trim();
+            if (line && !line.startsWith('##') && !line.startsWith('-') && !line.startsWith('#')) {
+              description = line;
+              break;
+            }
+          }
+        }
+        
+        servers.push({
+          name: serverName,
+          title: title,
+          description: description,
+          ip: ip,
+          version: version,
+          online: online,
+          status: status,
+          features: features,
+          hasIcon: fs.existsSync(iconPath)
+        });
+        
+      } catch (error) {
+        logger.error(`Error parsing server file ${file}:`, error);
+      }
+    });
+    
+    res.json(servers);
+    
+  } catch (error) {
+    logger.error('Error reading servers:', error);
+    res.status(500).json({ Message: 'Ошибка чтения серверов' });
+  }
+});
+
+// Страница серверов
+app.get('/servers', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public/servers.html'));
+});
+
 const PORT = 5013;
 app.listen(PORT, () => {
   logger.info(`Сервер запущен на порту ${PORT}`);
