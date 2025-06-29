@@ -866,10 +866,29 @@ app.get('/api/servers', (req, res) => {
           }
           
           // IP адрес
-          if (line.includes('IP адрес') || line.includes('IP:')) {
-            const ipMatch = line.match(/`([^`]+)`/);
+          if (line.toLowerCase().includes('ip адрес') || line.toLowerCase().includes('ip:')) {
+            // 1. Ищем IP в той же строке (в обратных кавычках или просто текст)
+            let ipMatch = line.match(/`([^`]+)`/);
+            if (!ipMatch) {
+              ipMatch = line.match(/ip[:\s]+([\w\.-]+)/i);
+            }
             if (ipMatch) {
               ip = ipMatch[1];
+            } else {
+              // 2. Ищем IP в следующей непустой строке
+              for (let j = i + 1; j < lines.length; j++) {
+                const nextLine = lines[j].trim();
+                if (nextLine) {
+                  let nextIpMatch = nextLine.match(/`([^`]+)`/);
+                  if (!nextIpMatch) {
+                    nextIpMatch = nextLine.match(/^([\w\.-]+)$/);
+                  }
+                  if (nextIpMatch) {
+                    ip = nextIpMatch[1];
+                  }
+                  break;
+                }
+              }
             }
             continue;
           }
