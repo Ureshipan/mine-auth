@@ -894,45 +894,75 @@ app.get('/api/servers', (req, res) => {
           }
           
           // Версия
-          if (line.includes('Версия')) {
-            const versionMatch = line.match(/Версия\s*\n\s*([^\n]+)/);
+          if (line.toLowerCase().includes('версия')) {
+            // 1. Ищем версию в той же строке
+            let versionMatch = line.match(/версия[:\s]+([^\n]+)/i);
+            if (!versionMatch) {
+              versionMatch = line.match(/версия\s*\n\s*([^\n]+)/i);
+            }
             if (versionMatch) {
               version = versionMatch[1].trim();
             } else {
-              // Ищем версию в той же строке
-              const verMatch = line.match(/Версия[:\s]+([^\n]+)/);
-              if (verMatch) {
-                version = verMatch[1].trim();
+              // 2. Ищем версию в следующей непустой строке
+              for (let j = i + 1; j < lines.length; j++) {
+                const nextLine = lines[j].trim();
+                if (nextLine) {
+                  const nextVersionMatch = nextLine.match(/^([\d\.]+)$/);
+                  if (nextVersionMatch) {
+                    version = nextVersionMatch[1].trim();
+                  }
+                  break;
+                }
               }
             }
             continue;
           }
           
           // Онлайн
-          if (line.includes('Онлайн')) {
-            const onlineMatch = line.match(/Онлайн\s*\n\s*([^\n]+)/);
+          if (line.toLowerCase().includes('онлайн')) {
+            // 1. Ищем онлайн в той же строке
+            let onlineMatch = line.match(/онлайн[:\s]+([^\n]+)/i);
+            if (!onlineMatch) {
+              onlineMatch = line.match(/онлайн\s*\n\s*([^\n]+)/i);
+            }
             if (onlineMatch) {
               online = onlineMatch[1].trim();
             } else {
-              // Ищем онлайн в той же строке
-              const onlMatch = line.match(/Онлайн[:\s]+([^\n]+)/);
-              if (onlMatch) {
-                online = onlMatch[1].trim();
+              // 2. Ищем онлайн в следующей непустой строке
+              for (let j = i + 1; j < lines.length; j++) {
+                const nextLine = lines[j].trim();
+                if (nextLine) {
+                  const nextOnlineMatch = nextLine.match(/^([\d\-\s]+игроков?|[\d\-\s]+)$/i);
+                  if (nextOnlineMatch) {
+                    online = nextOnlineMatch[1].trim();
+                  }
+                  break;
+                }
               }
             }
             continue;
           }
           
           // Статус
-          if (line.includes('Статус')) {
-            const statusMatch = line.match(/Статус\s*\n\s*([^\n]+)/);
+          if (line.toLowerCase().includes('статус')) {
+            // 1. Ищем статус в той же строке
+            let statusMatch = line.match(/статус[:\s]+([^\n]+)/i);
+            if (!statusMatch) {
+              statusMatch = line.match(/статус\s*\n\s*([^\n]+)/i);
+            }
             if (statusMatch) {
               status = statusMatch[1].trim();
             } else {
-              // Ищем статус в той же строке
-              const statMatch = line.match(/Статус[:\s]+([^\n]+)/);
-              if (statMatch) {
-                status = statMatch[1].trim();
+              // 2. Ищем статус в следующей непустой строке
+              for (let j = i + 1; j < lines.length; j++) {
+                const nextLine = lines[j].trim();
+                if (nextLine) {
+                  const nextStatusMatch = nextLine.match(/^([🟢🟡🔴][^\n]+)$/);
+                  if (nextStatusMatch) {
+                    status = nextStatusMatch[1].trim();
+                  }
+                  break;
+                }
               }
             }
             continue;
